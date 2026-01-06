@@ -388,6 +388,72 @@ function updateWallets(wallets, username) {
   return { success: true };
 }
 
+function deleteCategory(id, username) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const catSheet = ss.getSheetByName(SHEET_CATEGORIES);
+  const txSheet = ss.getSheetByName(SHEET_TRANSACTIONS);
+  
+  // 1. Delete the category
+  const catData = catSheet.getDataRange().getValues();
+  const catIdIdx = findColumnIndex(catData[0], 'ID');
+  const catUIdx = findColumnIndex(catData[0], 'Username');
+  
+  for (let i = 1; i < catData.length; i++) {
+    if (String(catData[i][catIdIdx]) === String(id) && String(catData[i][catUIdx]) === String(username)) {
+      catSheet.deleteRow(i + 1);
+      break;
+    }
+  }
+  
+  // 2. Update transactions to remove this categoryId
+  const txData = txSheet.getDataRange().getValues();
+  const txCatIdx = findColumnIndex(txData[0], 'CategoryId');
+  const txUIdx = findColumnIndex(txData[0], 'Username');
+  
+  if (txCatIdx !== -1) {
+    for (let i = 1; i < txData.length; i++) {
+      if (String(txData[i][txCatIdx]) === String(id) && String(txData[i][txUIdx]) === String(username)) {
+        txSheet.getRange(i + 1, txCatIdx + 1).setValue('');
+      }
+    }
+  }
+  
+  return { success: true };
+}
+
+function deleteWallet(id, username) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const walletSheet = ss.getSheetByName(SHEET_WALLETS);
+  const txSheet = ss.getSheetByName(SHEET_TRANSACTIONS);
+  
+  // 1. Delete the wallet
+  const walletData = walletSheet.getDataRange().getValues();
+  const wIdIdx = findColumnIndex(walletData[0], 'ID');
+  const wUIdx = findColumnIndex(walletData[0], 'Username');
+  
+  for (let i = 1; i < walletData.length; i++) {
+    if (String(walletData[i][wIdIdx]) === String(id) && String(walletData[i][wUIdx]) === String(username)) {
+      walletSheet.deleteRow(i + 1);
+      break;
+    }
+  }
+  
+  // 2. Update transactions to remove this walletId
+  const txData = txSheet.getDataRange().getValues();
+  const txWIdx = findColumnIndex(txData[0], 'WalletId');
+  const txUIdx = findColumnIndex(txData[0], 'Username');
+  
+  if (txWIdx !== -1) {
+    for (let i = 1; i < txData.length; i++) {
+      if (String(txData[i][txWIdx]) === String(id) && String(txData[i][txUIdx]) === String(username)) {
+        txSheet.getRange(i + 1, txWIdx + 1).setValue('');
+      }
+    }
+  }
+  
+  return { success: true };
+}
+
 function transferBetweenWallets(fromId, toId, amount, date, note, username) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);

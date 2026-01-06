@@ -127,7 +127,7 @@
 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-500 to-indigo-600">
-        <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-auto animate-scale-in">
+        <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-sm mx-auto animate-scale-in">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600"><Icons.PieChart size={32} /></div>
             <h1 className="text-2xl font-bold text-gray-800">Money Tracker</h1>
@@ -140,6 +140,363 @@
             <button disabled={loading} type="submit" className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg">{loading ? 'กำลังโหลด...' : 'ตกลง'}</button>
           </form>
           <button onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} className="w-full mt-4 text-sm text-blue-600 font-bold">{mode === 'login' ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}</button>
+        </div>
+      </div>
+    );
+  };
+
+  const ScreenDashboard = ({ transactions, categories, wallets, activeWalletId, setActiveWalletId }) => {
+    const [dashboardTab, setDashboardTab] = useState('expense');
+    const today = new Date();
+    const monthOptions = useMemo(() => {
+      const options = [];
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        options.push({ label: d.toLocaleString('th-TH', { month: 'long', year: 'numeric' }), startDate: toLocalDateString(d), endDate: toLocalDateString(new Date(d.getFullYear(), d.getMonth() + 1, 0)), value: i });
+      }
+      return options;
+    }, []);
+    const [selMonth, setSelMonth] = useState(monthOptions[0]);
+    const filtered = transactions.filter(t => t.date >= selMonth.startDate && t.date <= selMonth.endDate && t.type === dashboardTab && (activeWalletId === 'all' || t.walletId === activeWalletId));
+    const totalDisplay = filtered.reduce((s, t) => s + t.amount, 0);
+    const totalExpAll = transactions.filter(t => t.date >= selMonth.startDate && t.date <= selMonth.endDate && t.type === 'expense' && (activeWalletId === 'all' || t.walletId === activeWalletId)).reduce((s, t) => s + t.amount, 0);
+    const totalIncAll = transactions.filter(t => t.date >= selMonth.startDate && t.date <= selMonth.endDate && t.type === 'income' && (activeWalletId === 'all' || t.walletId === activeWalletId)).reduce((s, t) => s + t.amount, 0);
+    const daysInMonth = (new Date(selMonth.endDate)).getDate();
+    const avgExp = totalExpAll / daysInMonth; const avgInc = totalIncAll / daysInMonth;
+    const trendData = useMemo(() => {
+      const data = []; for (let i = 29; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i); const dateStr = toLocalDateString(d);
+        const val = transactions.filter(t => t.date === dateStr && t.type === 'expense' && (activeWalletId === 'all' || t.walletId === activeWalletId)).reduce((s, t) => s + t.amount, 0);
+        data.push({ date: dateStr, value: val });
+      } return data;
+    }, [transactions, activeWalletId]);
+    const categoryAgg = filtered.reduce((acc, curr) => { acc[curr.categoryId] = (acc[curr.categoryId] || 0) + curr.amount; return acc; }, {});
+    const chartData = Object.keys(categoryAgg).map(id => {
+      const c = categories.find(cat => cat.id === id) || { name: 'อื่นๆ', color: '#ccc' };
+      return { id, name: c.name, color: c.color, value: categoryAgg[id] };
+    }).sort((a, b) => b.value - a.value);
+
+    return (
+      <div className="pb-24 pt-6 px-4 min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto w-full">
+        <div className="flex items-center mb-6 overflow-x-auto gap-2 hide-scroll pb-2">
+          <button
+            onClick={() => setActiveWalletId('all')}
+            className={`px-6 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all shadow-sm border ${activeWalletId === 'all' ? 'bg-blue-600 text-white border-blue-600 shadow-blue-100' : 'bg-white text-gray-500 border-gray-100'}`}
+          >
+            ทั้งหมด
+          </button>
+          {wallets.map(w => (
+            <button
+              key={w.id}
+              onClick={() => setActiveWalletId(w.id)}
+              className={`px-6 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all shadow-sm border ${activeWalletId === w.id ? 'bg-blue-600 text-white border-blue-600 shadow-blue-100' : 'bg-white text-gray-500 border-gray-100'}`}
+            >
+              {w.name}
+            </button>
+          ))}
+        </div>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-black text-gray-800">สรุปข้อมูล</h2>
+          <select value={selMonth.value} onChange={e => setSelMonth(monthOptions[e.target.value])} className="bg-white border-none rounded-2xl px-4 py-2 text-sm font-bold shadow-sm outline-none">
+            {monthOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+          </select>
+        </div>
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 rounded-[2rem] shadow-xl mb-6 text-white text-center">
+          <div className="text-xs font-extrabold uppercase opacity-80 mb-1">เงินเหลือเก็บสุทธิ</div>
+          <div className="text-4xl font-black">{formatCurrency(totalIncAll - totalExpAll)}</div>
+          <TrendChart data={trendData} color="#ffffff" />
+        </div>
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          <div onClick={() => setDashboardTab('expense')} className={`p-4 rounded-3xl border-2 transition-all ${dashboardTab === 'expense' ? 'bg-pink-50 border-pink-200 scale-105' : 'bg-white border-transparent opacity-70'}`}>
+            <div className="text-xs text-gray-400 font-extrabold mb-1">รายจ่าย</div>
+            <div className="text-xl font-bold text-pink-600">{formatCurrency(totalExpAll)}</div>
+            <div className="text-[10px] text-pink-400 font-bold mt-1">เฉลี่ย {formatCurrency(avgExp)}/วัน</div>
+          </div>
+          <div onClick={() => setDashboardTab('income')} className={`p-4 rounded-3xl border-2 transition-all ${dashboardTab === 'income' ? 'bg-green-50 border-green-200 scale-105' : 'bg-white border-transparent opacity-70'}`}>
+            <div className="text-xs text-gray-400 font-extrabold mb-1">รายรับ</div>
+            <div className="text-xl font-bold text-green-600">{formatCurrency(totalIncAll)}</div>
+            <div className="text-[10px] text-green-400 font-bold mt-1">เฉลี่ย {formatCurrency(avgInc)}/วัน</div>
+          </div>
+        </div>
+        <div className="bg-white rounded-[2.5rem] p-8 shadow-sm flex-1 flex flex-col items-center">
+          <div className="mb-8"><DonutChart data={chartData} total={totalDisplay} /></div>
+          <div className="space-y-5 w-full">
+            {chartData.map(cat => (
+              <div key={cat.id}>
+                <div className="flex justify-between text-sm mb-1 font-bold"><span className="text-gray-700">{cat.name}</span><span className="text-gray-900">{formatCurrency(cat.value)}</span></div>
+                <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${(cat.value / totalDisplay) * 100}%`, backgroundColor: cat.color }}></div></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const ScreenAdd = ({ editTx, setEditTx, setActiveTab, categories, wallets, setTransactions, saveToBackend, user, showNotification, requestConfirm }) => {
+    const [type, setType] = useState(editTx ? editTx.type : 'expense');
+    const [amount, setAmount] = useState(editTx ? String(editTx.amount) : '');
+    const [date, setDate] = useState(editTx ? editTx.date : toLocalDateString(new Date()));
+    const [categoryId, setCategoryId] = useState(editTx ? editTx.categoryId : '');
+    const [walletId, setWalletId] = useState(editTx ? editTx.walletId : (wallets[0]?.id || ''));
+    const [note, setNote] = useState(editTx ? editTx.note : '');
+    const [aiText, setAiText] = useState('');
+    const [aiLoading, setAiLoading] = useState(false);
+
+    const processSave = (txData) => {
+      if (!txData.amount || !txData.categoryId || !txData.walletId) return false;
+      const newTx = { ...txData, id: editTx ? editTx.id : generateId() };
+      if (editTx) setTransactions(prev => prev.map(t => t.id === editTx.id ? newTx : t));
+      else setTransactions(prev => [newTx, ...prev]);
+      saveToBackend('transaction', newTx);
+      setActiveTab('history');
+      setEditTx(null);
+      return true;
+    };
+
+    const handleAI = () => {
+      if (!aiText) return; setAiLoading(true);
+      google.script.run.withSuccessHandler(res => {
+        setAiLoading(false);
+        if (res.success) {
+          const d = res.data;
+          const cat = categories.find(c => (c.name.toLowerCase() === d.categoryName.toLowerCase() || d.categoryName.includes(c.name)) && c.type === d.type) || categories.find(c => c.name === 'อื่นๆ' && c.type === d.type);
+          const txData = { amount: d.amount, type: d.type, date: d.date, note: d.note, categoryId: cat?.id || '', walletId: walletId };
+          setAmount(String(d.amount)); setType(d.type); setNote(d.note); setDate(d.date);
+          if (cat) setCategoryId(cat.id);
+          if (txData.categoryId && txData.walletId) {
+            showNotification('AI บันทึกข้อมูลเรียบร้อย');
+            processSave(txData);
+          } else {
+            showNotification('AI วิเคราะห์เสร็จแล้ว กรุณาตรวจสอบหมวดหมู่');
+          }
+        } else showNotification(res.error, 'error');
+      }).withFailureHandler(() => { setAiLoading(false); showNotification('AI เชื่อมต่อล้มเหลว', 'error'); }).processWithGemini(aiText, user.username);
+    };
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      processSave({ amount: parseFloat(amount), type, date, categoryId, walletId, note });
+    };
+
+    const handleDelete = () => {
+      requestConfirm('ลบรายการ?', 'ยืนยันลบรายการนี้?', () => {
+        setTransactions(p => p.filter(t => t.id !== editTx.id));
+        saveToBackend('delete_transaction', editTx.id);
+        setEditTx(null);
+        setActiveTab('history');
+      });
+    };
+
+    return (
+      <div className={`min-h-screen ${type === 'expense' ? 'bg-pink-50' : 'bg-green-50'} flex flex-col max-w-md mx-auto w-full`}>
+        <div className="p-4 flex justify-between items-center px-6">
+          {editTx ? <button onClick={handleDelete} className="text-red-500"><Icons.Trash2 /></button> : <div />}
+          <h2 className="text-lg font-bold">{editTx ? 'แก้ไขรายการ' : 'รายการใหม่'}</h2>
+          <button onClick={() => { setEditTx(null); setActiveTab('history'); }}><Icons.X /></button>
+        </div>
+        <div className="px-6 mb-4">
+          <div className="bg-white/50 rounded-2xl p-3 flex gap-2">
+            <input value={aiText} onChange={e => setAiText(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleAI()} className="flex-1 bg-transparent outline-none text-sm font-bold" placeholder="พิมพ์บอก AI เช่น 'กินข้าว 50 บาท'..." />
+            <button onClick={handleAI} disabled={aiLoading} className="p-2 bg-blue-600 text-white rounded-xl shadow-lg active:scale-95 transition-all">{aiLoading ? '...' : <Icons.Sparkles size={18} />}</button>
+          </div>
+        </div>
+        <div className="flex flex-col items-center py-4">
+          <div className="flex gap-2 mb-4 bg-white/50 p-1 rounded-full">
+            <button onClick={() => setType('expense')} className={`px-6 py-2 rounded-full font-bold ${type === 'expense' ? 'bg-white text-pink-600' : 'text-gray-500'}`}>จ่าย</button>
+            <button onClick={() => setType('income')} className={`px-6 py-2 rounded-full font-bold ${type === 'income' ? 'bg-white text-green-600' : 'text-gray-500'}`}>รับ</button>
+          </div>
+          <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="amount-input text-6xl font-bold bg-transparent text-center outline-none" placeholder="0" />
+          <div className="flex gap-2 mt-2">
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="bg-white/60 px-4 py-2 rounded-full text-sm font-bold outline-none" />
+            <select value={walletId} onChange={e => setWalletId(e.target.value)} className="bg-white/60 px-4 py-2 rounded-full text-sm font-bold outline-none">
+              {wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="bg-white flex-1 rounded-t-[2.5rem] p-6 pb-32 shadow-2xl overflow-y-auto">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-4 gap-4">
+              {categories.filter(c => c.type === type).map(cat => (
+                <button key={cat.id} type="button" onClick={() => setCategoryId(cat.id)} className={`p-2 rounded-2xl flex flex-col items-center ${categoryId === cat.id ? 'bg-gray-100 ring-2 ring-gray-300' : ''}`}>
+                  <div className="w-12 h-12 rounded-full text-white flex items-center justify-center font-bold" style={{ backgroundColor: cat.color }}>{cat.name[0]}</div>
+                  <span className="text-[10px] mt-1.5 font-bold text-gray-500 truncate w-full text-center">{cat.name}</span>
+                </button>
+              ))}
+            </div>
+            <input type="text" value={note} onChange={e => setNote(e.target.value)} className="w-full p-5 bg-gray-50 rounded-2xl outline-none font-medium" placeholder="บันทึก..." />
+            <button type="submit" className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg">บันทึก</button>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  const ScreenHistory = ({ transactions, categories, activeWalletId, setEditTx, setActiveTab }) => {
+    const [filterType, setFilterType] = useState('all');
+    const [filterCatId, setFilterCatId] = useState('all');
+    const [startDate, setStartDate] = useState(toLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1)));
+    const [endDate, setEndDate] = useState(toLocalDateString(new Date()));
+
+    const filtered = transactions.filter(t => (filterType === 'all' || t.type === filterType) && (activeWalletId === 'all' || t.walletId === activeWalletId) && (filterCatId === 'all' || t.categoryId === filterCatId) && (t.date >= startDate && t.date <= endDate)).sort((a, b) => b.date.localeCompare(a.date));
+    const totalFiltered = filtered.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0);
+    const grouped = filtered.reduce((acc, t) => { if (!acc[t.date]) acc[t.date] = []; acc[t.date].push(t); return acc; }, {});
+
+    return (
+      <div className="pb-24 pt-6 px-4 min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto w-full">
+        <div className="mb-6 space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">ประวัติ</h2>
+            <div className="text-sm font-black text-gray-800">ยอดรวม: {formatCurrency(totalFiltered)}</div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-white p-2 rounded-xl text-xs font-bold shadow-sm" />
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-white p-2 rounded-xl text-xs font-bold shadow-sm" />
+          </div>
+          <div className="flex gap-2 overflow-x-auto hide-scroll">
+            {['all', 'expense', 'income'].map(m => <button key={m} onClick={() => setFilterType(m)} className={`px-4 py-2 rounded-xl text-xs font-bold shadow-sm whitespace-nowrap ${filterType === m ? 'bg-gray-800 text-white' : 'bg-white text-gray-400'}`}>{m === 'all' ? 'ทั้งหมด' : (m === 'expense' ? 'จ่าย' : 'รับ')}</button>)}
+            <select value={filterCatId} onChange={e => setFilterCatId(e.target.value)} className="bg-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm outline-none">
+              <option value="all">ทุกหมวดหมู่</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="space-y-6">
+          {Object.keys(grouped).map(date => (
+            <div key={date}>
+              <div className="text-[11px] font-extrabold text-gray-400 uppercase mb-2 px-2">{new Date(date).toLocaleDateString('th-TH', { dateStyle: 'medium' })}</div>
+              <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+                {grouped[date].map(t => {
+                  const cat = categories.find(c => c.id === t.categoryId) || { name: 'อื่นๆ', color: '#ccc' };
+                  return (
+                    <div key={t.id} onClick={() => { setEditTx(t); setActiveTab('add'); }} className="p-4 flex justify-between items-center border-b border-gray-50 last:border-0 active:bg-gray-50">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl text-white flex items-center justify-center font-bold" style={{ backgroundColor: cat.color }}>{cat.name[0]}</div>
+                        <div><div className="font-bold text-gray-800">{cat.name}</div><div className="text-[10px] text-gray-400">{t.note}</div></div>
+                      </div>
+                      <div className={`font-black ${t.type === 'income' ? 'text-green-600' : 'text-gray-800'}`}>{t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const CategoryManager = ({ onClose, categories, setCategories, saveToBackend, requestConfirm }) => {
+    const [tab, setTab] = useState('expense');
+    const [editing, setEditing] = useState(null);
+    const [tempName, setTempName] = useState('');
+    const [tempColor, setTempColor] = useState('#000000');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const openEditor = (cat) => { setEditing(cat); setTempName(cat ? cat.name : ''); setTempColor(cat ? cat.color : '#000000'); setIsModalOpen(true); };
+    const handleSave = () => {
+      if (!tempName) return; let newCats = [...categories];
+      if (editing) newCats = newCats.map(c => c.id === editing.id ? { ...c, name: tempName, color: tempColor } : c);
+      else newCats.push({ id: generateId(), name: tempName, type: tab, color: tempColor });
+      setCategories(newCats); saveToBackend('categories', newCats); setIsModalOpen(false);
+    };
+    return (
+      <div className="fixed inset-0 bg-white z-50 flex flex-col max-w-md mx-auto w-full">
+        <div className="p-4 border-b flex justify-between items-center px-6"><button onClick={onClose}><Icons.X /></button><h2 className="font-bold">จัดการหมวดหมู่</h2><div className="w-6" /></div>
+        <div className="p-4 flex-1 overflow-y-auto bg-gray-50">
+          <div className="flex gap-2 mb-6 bg-white p-1 rounded-xl">
+            <button onClick={() => setTab('expense')} className={`flex-1 py-2 rounded-lg font-bold ${tab === 'expense' ? 'bg-pink-100 text-pink-700' : 'text-gray-400'}`}>รายจ่าย</button>
+            <button onClick={() => setTab('income')} className={`flex-1 py-2 rounded-lg font-bold ${tab === 'income' ? 'bg-green-100 text-green-700' : 'text-gray-400'}`}>รายรับ</button>
+          </div>
+          <div className="space-y-2">
+            {categories.filter(c => c.type === tab).map(c => (
+              <div key={c.id} onClick={() => openEditor(c)} className="bg-white p-4 rounded-xl flex items-center justify-between shadow-sm active:scale-[0.98] transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-full" style={{ backgroundColor: c.color }}></div>
+                  <span className="font-bold">{c.name}</span>
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); requestConfirm('ลบหมวดหมู่?', `ยืนยันลบหมวดหมู่ "${c.name}"?`, () => { const next = categories.filter(x => x.id !== c.id); setCategories(next); saveToBackend('delete_category', c.id); }); }} className="p-2 text-gray-300 hover:text-red-500 transition-colors">
+                  <Icons.Trash2 size={18} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => openEditor(null)} className="w-full mt-8 py-4 rounded-xl font-bold text-white bg-indigo-600">+ เพิ่มหมวดหมู่</button>
+        </div>
+        {isModalOpen && <div className="fixed inset-0 z-[60] bg-black/50 flex items-end justify-center"><div className="bg-white w-full max-w-md rounded-t-[2rem] p-8 animate-slide-up"><h3 className="text-xl font-bold mb-6">ข้อมูลหมวดหมู่</h3><input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl mb-4 outline-none font-bold" placeholder="ชื่อหมวด" /><input type="color" value={tempColor} onChange={e => setTempColor(e.target.value)} className="w-full h-12 mb-6 cursor-pointer" /><button onClick={handleSave} className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold">บันทึก</button><button onClick={() => setIsModalOpen(false)} className="w-full py-4 text-gray-400 font-bold mt-2">ยกเลิก</button></div></div>}
+      </div>
+    );
+  };
+
+  const WalletManager = ({ onClose, wallets, setWallets, saveToBackend, requestConfirm }) => {
+    const [editing, setEditing] = useState(null);
+    const [tempName, setTempName] = useState('');
+    const [tempBalance, setTempBalance] = useState('');
+    const [tempColor, setTempColor] = useState('#3b82f6');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const openEditor = (w) => { setEditing(w); setTempName(w ? w.name : ''); setTempBalance(w ? String(w.initialbalance || 0) : ''); setTempColor(w ? w.color : '#3b82f6'); setIsModalOpen(true); };
+    const handleSave = () => {
+      if (!tempName) return; let newWallets = [...wallets];
+      if (editing) newWallets = newWallets.map(w => w.id === editing.id ? { ...w, name: tempName, initialbalance: parseFloat(tempBalance) || 0, color: tempColor } : w);
+      else newWallets.push({ id: generateId(), name: tempName, type: 'other', initialbalance: parseFloat(tempBalance) || 0, color: tempColor });
+      setWallets(newWallets); saveToBackend('wallets', newWallets); setIsModalOpen(false);
+    };
+    return (
+      <div className="fixed inset-0 bg-white z-50 flex flex-col max-w-md mx-auto w-full">
+        <div className="p-4 border-b flex justify-between items-center px-6"><button onClick={onClose}><Icons.X /></button><h2 className="font-bold">จัดการกระเป๋าเงิน</h2><div className="w-6" /></div>
+        <div className="p-4 flex-1 overflow-y-auto bg-gray-50">
+          <div className="space-y-2">
+            {wallets.map(w => (
+              <div key={w.id} onClick={() => openEditor(w)} className="bg-white p-4 rounded-xl flex justify-between items-center shadow-sm active:scale-[0.98] transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: w.color }}><Icons.Wallet size={16} /></div>
+                  <span className="font-bold">{w.name}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-gray-400 font-bold">฿{(w.initialbalance || 0).toLocaleString()}</span>
+                  <button onClick={(e) => { e.stopPropagation(); requestConfirm('ลบกระเป๋าเงิน?', `ยืนยันลบกระเป๋าเงิน "${w.name}"?`, () => { const next = wallets.filter(x => x.id !== w.id); setWallets(next); saveToBackend('delete_wallet', w.id); }); }} className="p-2 text-gray-300 hover:text-red-500 transition-colors">
+                    <Icons.Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => openEditor(null)} className="w-full mt-8 py-4 rounded-xl font-bold text-white bg-blue-600">+ เพิ่มกระเป๋าเงิน</button>
+        </div>
+        {isModalOpen && <div className="fixed inset-0 z-[60] bg-black/50 flex items-end justify-center"><div className="bg-white w-full max-w-md rounded-t-[2rem] p-8 animate-slide-up"><h3 className="text-xl font-bold mb-6">ข้อมูลกระเป๋าเงิน</h3><input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl mb-4 outline-none font-bold" placeholder="ชื่อกระเป๋า" /><input type="number" value={tempBalance} onChange={e => setTempBalance(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl mb-4 outline-none font-bold" placeholder="ยอดเงินเริ่มต้น" /><input type="color" value={tempColor} onChange={e => setTempColor(e.target.value)} className="w-full h-12 mb-6 cursor-pointer" /><button onClick={handleSave} className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold">บันทึก</button><button onClick={() => setIsModalOpen(false)} className="w-full py-4 text-gray-400 font-bold mt-2">ยกเลิก</button></div></div>}
+      </div>
+    );
+  };
+
+  const TransferModal = ({ onClose, wallets, setTransactions, user, showNotification, toLocalDateString, generateId }) => {
+    const [fromId, setFromId] = useState(wallets[0]?.id || '');
+    const [toId, setToId] = useState(wallets[1]?.id || wallets[0]?.id || '');
+    const [amount, setAmount] = useState('');
+    const [note, setNote] = useState('');
+    const handleTransfer = () => {
+      if (!amount || fromId === toId) return;
+      const amountNum = parseFloat(amount); const dateStr = toLocalDateString(new Date());
+      const outTx = { id: 'trf_out_' + generateId(), date: dateStr, type: 'expense', categoryId: '', walletId: fromId, amount: amountNum, note: `[โอนออก] ${note}` };
+      const inTx = { id: 'trf_in_' + generateId(), date: dateStr, type: 'income', categoryId: '', walletId: toId, amount: amountNum, note: `[โอนเข้า] ${note}` };
+      setTransactions(prev => [outTx, inTx, ...prev]); showNotification('กำลังโอนเงิน...'); onClose();
+      if (typeof google !== 'undefined') {
+        google.script.run.withSuccessHandler(res => {
+          if (res.success) { showNotification('โอนเงินสำเร็จ'); google.script.run.withSuccessHandler(data => { if (data.status === 'success') setTransactions(data.transactions); }).getInitialData(user.username); }
+          else { showNotification(res.error, 'error'); google.script.run.withSuccessHandler(data => { if (data.status === 'success') setTransactions(data.transactions); }).getInitialData(user.username); }
+        }).withFailureHandler(() => showNotification('เชื่อมต่อล้มเหลว', 'error')).transferBetweenWallets(fromId, toId, amountNum, dateStr, note, user.username);
+      }
+    };
+    return (
+      <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-6" onClick={onClose}>
+        <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
+          <h3 className="text-xl font-bold mb-6">โอนเงิน</h3>
+          <div className="space-y-4">
+            <select value={fromId} onChange={e => setFromId(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl outline-none font-bold">{wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select>
+            <div className="text-center text-gray-300">▼</div>
+            <select value={toId} onChange={e => setToId(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl outline-none font-bold">{wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select>
+            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl outline-none font-bold" placeholder="จำนวนเงิน" />
+            <input type="text" value={note} onChange={e => setNote(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl outline-none font-bold" placeholder="บันทึก" />
+            <button onClick={handleTransfer} className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg">โอนเงิน</button>
+          </div>
         </div>
       </div>
     );
@@ -190,326 +547,11 @@
         const f = () => showNotification('บันทึกล้มเหลว', 'error');
         if (type === 'transaction') { if (editTx) google.script.run.withSuccessHandler(h).withFailureHandler(f).editTransaction(data, user.username); else google.script.run.withSuccessHandler(h).withFailureHandler(f).saveTransaction(data, user.username); }
         if (type === 'delete_transaction') google.script.run.withSuccessHandler(h).withFailureHandler(f).deleteTransaction(data, user.username);
+        if (type === 'delete_category') google.script.run.withSuccessHandler(h).withFailureHandler(f).deleteCategory(data, user.username);
+        if (type === 'delete_wallet') google.script.run.withSuccessHandler(h).withFailureHandler(f).deleteWallet(data, user.username);
         if (type === 'categories') google.script.run.withSuccessHandler(h).withFailureHandler(f).updateCategories(data, user.username);
         if (type === 'wallets') google.script.run.withSuccessHandler(h).withFailureHandler(f).updateWallets(data, user.username);
       }
-    };
-
-    const ScreenDashboard = () => {
-      const [dashboardTab, setDashboardTab] = useState('expense');
-      const today = new Date();
-      const monthOptions = useMemo(() => {
-        const options = [];
-        for (let i = 0; i < 12; i++) {
-          const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-          options.push({ label: d.toLocaleString('th-TH', { month: 'long', year: 'numeric' }), startDate: toLocalDateString(d), endDate: toLocalDateString(new Date(d.getFullYear(), d.getMonth() + 1, 0)), value: i });
-        }
-        return options;
-      }, []);
-      const [selMonth, setSelMonth] = useState(monthOptions[0]);
-      const filtered = transactions.filter(t => t.date >= selMonth.startDate && t.date <= selMonth.endDate && t.type === dashboardTab && (activeWalletId === 'all' || t.walletId === activeWalletId));
-      const totalDisplay = filtered.reduce((s, t) => s + t.amount, 0);
-      const totalExpAll = transactions.filter(t => t.date >= selMonth.startDate && t.date <= selMonth.endDate && t.type === 'expense' && (activeWalletId === 'all' || t.walletId === activeWalletId)).reduce((s, t) => s + t.amount, 0);
-      const totalIncAll = transactions.filter(t => t.date >= selMonth.startDate && t.date <= selMonth.endDate && t.type === 'income' && (activeWalletId === 'all' || t.walletId === activeWalletId)).reduce((s, t) => s + t.amount, 0);
-      const daysInMonth = (new Date(selMonth.endDate)).getDate();
-      const avgExp = totalExpAll / daysInMonth; const avgInc = totalIncAll / daysInMonth;
-      const trendData = useMemo(() => {
-        const data = []; for (let i = 29; i >= 0; i--) {
-          const d = new Date(); d.setDate(d.getDate() - i); const dateStr = toLocalDateString(d);
-          const val = transactions.filter(t => t.date === dateStr && t.type === 'expense' && (activeWalletId === 'all' || t.walletId === activeWalletId)).reduce((s, t) => s + t.amount, 0);
-          data.push({ date: dateStr, value: val });
-        } return data;
-      }, [transactions, activeWalletId]);
-      const categoryAgg = filtered.reduce((acc, curr) => { acc[curr.categoryId] = (acc[curr.categoryId] || 0) + curr.amount; return acc; }, {});
-      const chartData = Object.keys(categoryAgg).map(id => {
-        const c = categories.find(cat => cat.id === id) || { name: 'อื่นๆ', color: '#ccc' };
-        return { id, name: c.name, color: c.color, value: categoryAgg[id] };
-      }).sort((a, b) => b.value - a.value);
-
-      return (
-        <div className="pb-24 pt-6 px-4 min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto w-full">
-          <div className="flex justify-between items-center mb-6 overflow-x-auto gap-2 hide-scroll">
-            <button onClick={() => setActiveWalletId('all')} className={`wallet-card ${activeWalletId === 'all' ? 'active' : ''}`}>ทั้งหมด</button>
-            {wallets.map(w => <button key={w.id} onClick={() => setActiveWalletId(w.id)} className={`wallet-card ${activeWalletId === w.id ? 'active' : ''}`}>{w.name}</button>)}
-          </div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-black text-gray-800">สรุปข้อมูล</h2>
-            <select value={selMonth.value} onChange={e => setSelMonth(monthOptions[e.target.value])} className="bg-white border-none rounded-2xl px-4 py-2 text-sm font-bold shadow-sm outline-none">
-              {monthOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-            </select>
-          </div>
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 rounded-[2rem] shadow-xl mb-6 text-white text-center">
-            <div className="text-xs font-extrabold uppercase opacity-80 mb-1">เงินเหลือเก็บสุทธิ</div>
-            <div className="text-4xl font-black">{formatCurrency(totalIncAll - totalExpAll)}</div>
-            <TrendChart data={trendData} color="#ffffff" />
-          </div>
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div onClick={() => setDashboardTab('expense')} className={`p-4 rounded-3xl border-2 transition-all ${dashboardTab === 'expense' ? 'bg-pink-50 border-pink-200 scale-105' : 'bg-white border-transparent opacity-70'}`}>
-              <div className="text-xs text-gray-400 font-extrabold mb-1">รายจ่าย</div>
-              <div className="text-xl font-bold text-pink-600">{formatCurrency(totalExpAll)}</div>
-              <div className="text-[10px] text-pink-400 font-bold mt-1">เฉลี่ย {formatCurrency(avgExp)}/วัน</div>
-            </div>
-            <div onClick={() => setDashboardTab('income')} className={`p-4 rounded-3xl border-2 transition-all ${dashboardTab === 'income' ? 'bg-green-50 border-green-200 scale-105' : 'bg-white border-transparent opacity-70'}`}>
-              <div className="text-xs text-gray-400 font-extrabold mb-1">รายรับ</div>
-              <div className="text-xl font-bold text-green-600">{formatCurrency(totalIncAll)}</div>
-              <div className="text-[10px] text-green-400 font-bold mt-1">เฉลี่ย {formatCurrency(avgInc)}/วัน</div>
-            </div>
-          </div>
-          <div className="bg-white rounded-[2.5rem] p-8 shadow-sm flex-1 flex flex-col items-center">
-            <div className="mb-8"><DonutChart data={chartData} total={totalDisplay} /></div>
-            <div className="space-y-5 w-full">
-              {chartData.map(cat => (
-                <div key={cat.id}>
-                  <div className="flex justify-between text-sm mb-1 font-bold"><span className="text-gray-700">{cat.name}</span><span className="text-gray-900">{formatCurrency(cat.value)}</span></div>
-                  <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${(cat.value / totalDisplay) * 100}%`, backgroundColor: cat.color }}></div></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      );
-    };
-
-    const ScreenAdd = () => {
-      const [type, setType] = useState(editTx ? editTx.type : 'expense');
-      const [amount, setAmount] = useState(editTx ? String(editTx.amount) : '');
-      const [date, setDate] = useState(editTx ? editTx.date : toLocalDateString(new Date()));
-      const [categoryId, setCategoryId] = useState(editTx ? editTx.categoryId : '');
-      const [walletId, setWalletId] = useState(editTx ? editTx.walletId : (wallets[0]?.id || ''));
-      const [note, setNote] = useState(editTx ? editTx.note : '');
-      const [aiText, setAiText] = useState('');
-      const [aiLoading, setAiLoading] = useState(false);
-
-      const processSave = (txData) => {
-        if (!txData.amount || !txData.categoryId || !txData.walletId) return false;
-        const newTx = { ...txData, id: editTx ? editTx.id : generateId() };
-        if (editTx) setTransactions(prev => prev.map(t => t.id === editTx.id ? newTx : t));
-        else setTransactions(prev => [newTx, ...prev]);
-        saveToBackend('transaction', newTx);
-        setActiveTab('history');
-        setEditTx(null);
-        return true;
-      };
-
-      const handleAI = () => {
-        if (!aiText) return; setAiLoading(true);
-        google.script.run.withSuccessHandler(res => {
-          setAiLoading(false);
-          if (res.success) {
-            const d = res.data;
-            const cat = categories.find(c => (c.name.toLowerCase() === d.categoryName.toLowerCase() || d.categoryName.includes(c.name)) && c.type === d.type) || categories.find(c => c.name === 'อื่นๆ' && c.type === d.type);
-            const txData = { amount: d.amount, type: d.type, date: d.date, note: d.note, categoryId: cat?.id || '', walletId: walletId };
-            setAmount(String(d.amount)); setType(d.type); setNote(d.note); setDate(d.date);
-            if (cat) setCategoryId(cat.id);
-            if (txData.categoryId && txData.walletId) {
-              showNotification('AI บันทึกข้อมูลเรียบร้อย');
-              processSave(txData);
-            } else {
-              showNotification('AI วิเคราะห์เสร็จแล้ว กรุณาตรวจสอบหมวดหมู่');
-            }
-          } else showNotification(res.error, 'error');
-        }).withFailureHandler(() => { setAiLoading(false); showNotification('AI เชื่อมต่อล้มเหลว', 'error'); }).processWithGemini(aiText, user.username);
-      };
-
-      const handleSubmit = (e) => {
-        e.preventDefault();
-        processSave({ amount: parseFloat(amount), type, date, categoryId, walletId, note });
-      };
-
-      const handleDelete = () => {
-        requestConfirm('ลบรายการ?', 'ยืนยันลบรายการนี้?', () => {
-          setTransactions(p => p.filter(t => t.id !== editTx.id));
-          saveToBackend('delete_transaction', editTx.id);
-          setEditTx(null);
-          setActiveTab('history');
-        });
-      };
-
-      return (
-        <div className={`min-h-screen ${type === 'expense' ? 'bg-pink-50' : 'bg-green-50'} flex flex-col max-w-md mx-auto w-full`}>
-          <div className="p-4 flex justify-between items-center px-6">
-            {editTx ? <button onClick={handleDelete} className="text-red-500"><Icons.Trash2 /></button> : <div />}
-            <h2 className="text-lg font-bold">{editTx ? 'แก้ไขรายการ' : 'รายการใหม่'}</h2>
-            <button onClick={() => { setEditTx(null); setActiveTab('history'); }}><Icons.X /></button>
-          </div>
-          <div className="px-6 mb-4">
-            <div className="bg-white/50 rounded-2xl p-3 flex gap-2">
-              <input value={aiText} onChange={e => setAiText(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleAI()} className="flex-1 bg-transparent outline-none text-sm font-bold" placeholder="พิมพ์บอก AI เช่น 'กินข้าว 50 บาท'..." />
-              <button onClick={handleAI} disabled={aiLoading} className="p-2 bg-blue-600 text-white rounded-xl shadow-lg active:scale-95 transition-all">{aiLoading ? '...' : <Icons.Sparkles size={18} />}</button>
-            </div>
-          </div>
-          <div className="flex flex-col items-center py-4">
-            <div className="flex gap-2 mb-4 bg-white/50 p-1 rounded-full">
-              <button onClick={() => setType('expense')} className={`px-6 py-2 rounded-full font-bold ${type === 'expense' ? 'bg-white text-pink-600' : 'text-gray-500'}`}>จ่าย</button>
-              <button onClick={() => setType('income')} className={`px-6 py-2 rounded-full font-bold ${type === 'income' ? 'bg-white text-green-600' : 'text-gray-500'}`}>รับ</button>
-            </div>
-            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="amount-input text-6xl font-bold bg-transparent text-center outline-none" placeholder="0" />
-            <div className="flex gap-2 mt-2">
-              <input type="date" value={date} onChange={e => setDate(e.target.value)} className="bg-white/60 px-4 py-2 rounded-full text-sm font-bold outline-none" />
-              <select value={walletId} onChange={e => setWalletId(e.target.value)} className="bg-white/60 px-4 py-2 rounded-full text-sm font-bold outline-none">
-                {wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="bg-white flex-1 rounded-t-[2.5rem] p-6 pb-32 shadow-2xl overflow-y-auto">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-4 gap-4">
-                {categories.filter(c => c.type === type).map(cat => (
-                  <button key={cat.id} type="button" onClick={() => setCategoryId(cat.id)} className={`p-2 rounded-2xl flex flex-col items-center ${categoryId === cat.id ? 'bg-gray-100 ring-2 ring-gray-300' : ''}`}>
-                    <div className="w-12 h-12 rounded-full text-white flex items-center justify-center font-bold" style={{ backgroundColor: cat.color }}>{cat.name[0]}</div>
-                    <span className="text-[10px] mt-1.5 font-bold text-gray-500 truncate w-full text-center">{cat.name}</span>
-                  </button>
-                ))}
-              </div>
-              <input type="text" value={note} onChange={e => setNote(e.target.value)} className="w-full p-5 bg-gray-50 rounded-2xl outline-none font-medium" placeholder="บันทึก..." />
-              <button type="submit" className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg">บันทึก</button>
-            </form>
-          </div>
-        </div>
-      );
-    };
-
-    const ScreenHistory = () => {
-      const [filterType, setFilterType] = useState('all');
-      const [filterCatId, setFilterCatId] = useState('all');
-      const [startDate, setStartDate] = useState(toLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1)));
-      const [endDate, setEndDate] = useState(toLocalDateString(new Date()));
-
-      const filtered = transactions.filter(t => (filterType === 'all' || t.type === filterType) && (activeWalletId === 'all' || t.walletId === activeWalletId) && (filterCatId === 'all' || t.categoryId === filterCatId) && (t.date >= startDate && t.date <= endDate)).sort((a, b) => b.date.localeCompare(a.date));
-      const totalFiltered = filtered.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0);
-      const grouped = filtered.reduce((acc, t) => { if (!acc[t.date]) acc[t.date] = []; acc[t.date].push(t); return acc; }, {});
-
-      return (
-        <div className="pb-24 pt-6 px-4 min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto w-full">
-          <div className="mb-6 space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">ประวัติ</h2>
-              <div className="text-sm font-black text-gray-800">ยอดรวม: {formatCurrency(totalFiltered)}</div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-white p-2 rounded-xl text-xs font-bold shadow-sm" />
-              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-white p-2 rounded-xl text-xs font-bold shadow-sm" />
-            </div>
-            <div className="flex gap-2 overflow-x-auto hide-scroll">
-              {['all', 'expense', 'income'].map(m => <button key={m} onClick={() => setFilterType(m)} className={`px-4 py-2 rounded-xl text-xs font-bold shadow-sm whitespace-nowrap ${filterType === m ? 'bg-gray-800 text-white' : 'bg-white text-gray-400'}`}>{m === 'all' ? 'ทั้งหมด' : (m === 'expense' ? 'จ่าย' : 'รับ')}</button>)}
-              <select value={filterCatId} onChange={e => setFilterCatId(e.target.value)} className="bg-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm outline-none">
-                <option value="all">ทุกหมวดหมู่</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="space-y-6">
-            {Object.keys(grouped).map(date => (
-              <div key={date}>
-                <div className="text-[11px] font-extrabold text-gray-400 uppercase mb-2 px-2">{new Date(date).toLocaleDateString('th-TH', { dateStyle: 'medium' })}</div>
-                <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-                  {grouped[date].map(t => {
-                    const cat = categories.find(c => c.id === t.categoryId) || { name: 'อื่นๆ', color: '#ccc' };
-                    return (
-                      <div key={t.id} onClick={() => { setEditTx(t); setActiveTab('add'); }} className="p-4 flex justify-between items-center border-b border-gray-50 last:border-0 active:bg-gray-50">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl text-white flex items-center justify-center font-bold" style={{ backgroundColor: cat.color }}>{cat.name[0]}</div>
-                          <div><div className="font-bold text-gray-800">{cat.name}</div><div className="text-[10px] text-gray-400">{t.note}</div></div>
-                        </div>
-                        <div className={`font-black ${t.type === 'income' ? 'text-green-600' : 'text-gray-800'}`}>{t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    };
-
-    const CategoryManager = ({ onClose }) => {
-      const [tab, setTab] = useState('expense');
-      const [editing, setEditing] = useState(null);
-      const [tempName, setTempName] = useState('');
-      const [tempColor, setTempColor] = useState('#000000');
-      const [isModalOpen, setIsModalOpen] = useState(false);
-      const openEditor = (cat) => { setEditing(cat); setTempName(cat ? cat.name : ''); setTempColor(cat ? cat.color : '#000000'); setIsModalOpen(true); };
-      const handleSave = () => {
-        if (!tempName) return; let newCats = [...categories];
-        if (editing) newCats = newCats.map(c => c.id === editing.id ? { ...c, name: tempName, color: tempColor } : c);
-        else newCats.push({ id: generateId(), name: tempName, type: tab, color: tempColor });
-        setCategories(newCats); saveToBackend('categories', newCats); setIsModalOpen(false);
-      };
-      return (
-        <div className="fixed inset-0 bg-white z-50 flex flex-col max-w-md mx-auto w-full">
-          <div className="p-4 border-b flex justify-between items-center px-6"><button onClick={onClose}><Icons.X /></button><h2 className="font-bold">จัดการหมวดหมู่</h2><div className="w-6" /></div>
-          <div className="p-4 flex-1 overflow-y-auto bg-gray-50">
-            <div className="flex gap-2 mb-6 bg-white p-1 rounded-xl">
-              <button onClick={() => setTab('expense')} className={`flex-1 py-2 rounded-lg font-bold ${tab === 'expense' ? 'bg-pink-100 text-pink-700' : 'text-gray-400'}`}>รายจ่าย</button>
-              <button onClick={() => setTab('income')} className={`flex-1 py-2 rounded-lg font-bold ${tab === 'income' ? 'bg-green-100 text-green-700' : 'text-gray-400'}`}>รายรับ</button>
-            </div>
-            <div className="space-y-2">{categories.filter(c => c.type === tab).map(c => <div key={c.id} onClick={() => openEditor(c)} className="bg-white p-4 rounded-xl flex items-center gap-4 shadow-sm"><div className="w-8 h-8 rounded-full" style={{ backgroundColor: c.color }}></div><span className="font-bold">{c.name}</span></div>)}</div>
-            <button onClick={() => openEditor(null)} className="w-full mt-8 py-4 rounded-xl font-bold text-white bg-indigo-600">+ เพิ่มหมวดหมู่</button>
-          </div>
-          {isModalOpen && <div className="fixed inset-0 z-[60] bg-black/50 flex items-end justify-center"><div className="bg-white w-full max-w-md rounded-t-[2rem] p-8 animate-slide-up"><h3 className="text-xl font-bold mb-6">ข้อมูลหมวดหมู่</h3><input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl mb-4 outline-none font-bold" placeholder="ชื่อหมวด" /><input type="color" value={tempColor} onChange={e => setTempColor(e.target.value)} className="w-full h-12 mb-6 cursor-pointer" /><button onClick={handleSave} className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold">บันทึก</button><button onClick={() => setIsModalOpen(false)} className="w-full py-4 text-gray-400 font-bold mt-2">ยกเลิก</button></div></div>}
-        </div>
-      );
-    };
-
-    const WalletManager = ({ onClose }) => {
-      const [editing, setEditing] = useState(null);
-      const [tempName, setTempName] = useState('');
-      const [tempBalance, setTempBalance] = useState('');
-      const [tempColor, setTempColor] = useState('#3b82f6');
-      const [isModalOpen, setIsModalOpen] = useState(false);
-      const openEditor = (w) => { setEditing(w); setTempName(w ? w.name : ''); setTempBalance(w ? String(w.initialbalance || 0) : ''); setTempColor(w ? w.color : '#3b82f6'); setIsModalOpen(true); };
-      const handleSave = () => {
-        if (!tempName) return; let newWallets = [...wallets];
-        if (editing) newWallets = newWallets.map(w => w.id === editing.id ? { ...w, name: tempName, initialbalance: parseFloat(tempBalance) || 0, color: tempColor } : w);
-        else newWallets.push({ id: generateId(), name: tempName, type: 'other', initialbalance: parseFloat(tempBalance) || 0, color: tempColor });
-        setWallets(newWallets); saveToBackend('wallets', newWallets); setIsModalOpen(false);
-      };
-      return (
-        <div className="fixed inset-0 bg-white z-50 flex flex-col max-w-md mx-auto w-full">
-          <div className="p-4 border-b flex justify-between items-center px-6"><button onClick={onClose}><Icons.X /></button><h2 className="font-bold">จัดการกระเป๋าเงิน</h2><div className="w-6" /></div>
-          <div className="p-4 flex-1 overflow-y-auto bg-gray-50">
-            <div className="space-y-2">{wallets.map(w => <div key={w.id} onClick={() => openEditor(w)} className="bg-white p-4 rounded-xl flex justify-between items-center shadow-sm"><div className="flex items-center gap-4"><div className="w-8 h-8 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: w.color }}><Icons.Wallet size={16} /></div><span className="font-bold">{w.name}</span></div><span className="text-gray-400 font-bold">฿{(w.initialbalance || 0).toLocaleString()}</span></div>)}</div>
-            <button onClick={() => openEditor(null)} className="w-full mt-8 py-4 rounded-xl font-bold text-white bg-blue-600">+ เพิ่มกระเป๋าเงิน</button>
-          </div>
-          {isModalOpen && <div className="fixed inset-0 z-[60] bg-black/50 flex items-end justify-center"><div className="bg-white w-full max-w-md rounded-t-[2rem] p-8 animate-slide-up"><h3 className="text-xl font-bold mb-6">ข้อมูลกระเป๋าเงิน</h3><input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl mb-4 outline-none font-bold" placeholder="ชื่อกระเป๋า" /><input type="number" value={tempBalance} onChange={e => setTempBalance(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl mb-4 outline-none font-bold" placeholder="ยอดเงินเริ่มต้น" /><input type="color" value={tempColor} onChange={e => setTempColor(e.target.value)} className="w-full h-12 mb-6 cursor-pointer" /><button onClick={handleSave} className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold">บันทึก</button><button onClick={() => setIsModalOpen(false)} className="w-full py-4 text-gray-400 font-bold mt-2">ยกเลิก</button></div></div>}
-        </div>
-      );
-    };
-
-    const TransferModal = ({ onClose }) => {
-      const [fromId, setFromId] = useState(wallets[0]?.id || '');
-      const [toId, setToId] = useState(wallets[1]?.id || wallets[0]?.id || '');
-      const [amount, setAmount] = useState('');
-      const [note, setNote] = useState('');
-      const handleTransfer = () => {
-        if (!amount || fromId === toId) return;
-        const amountNum = parseFloat(amount); const dateStr = toLocalDateString(new Date());
-        const outTx = { id: 'trf_out_' + generateId(), date: dateStr, type: 'expense', categoryId: '', walletId: fromId, amount: amountNum, note: `[โอนออก] ${note}` };
-        const inTx = { id: 'trf_in_' + generateId(), date: dateStr, type: 'income', categoryId: '', walletId: toId, amount: amountNum, note: `[โอนเข้า] ${note}` };
-        setTransactions(prev => [outTx, inTx, ...prev]); showNotification('กำลังโอนเงิน...'); onClose();
-        if (typeof google !== 'undefined') {
-          google.script.run.withSuccessHandler(res => {
-            if (res.success) { showNotification('โอนเงินสำเร็จ'); google.script.run.withSuccessHandler(data => { if (data.status === 'success') setTransactions(data.transactions); }).getInitialData(user.username); }
-            else { showNotification(res.error, 'error'); google.script.run.withSuccessHandler(data => { if (data.status === 'success') setTransactions(data.transactions); }).getInitialData(user.username); }
-          }).withFailureHandler(() => showNotification('เชื่อมต่อล้มเหลว', 'error')).transferBetweenWallets(fromId, toId, amountNum, dateStr, note, user.username);
-        }
-      };
-      return (
-        <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-6" onClick={onClose}>
-          <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-xl font-bold mb-6">โอนเงิน</h3>
-            <div className="space-y-4">
-              <select value={fromId} onChange={e => setFromId(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl outline-none font-bold">{wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select>
-              <div className="text-center text-gray-300">▼</div>
-              <select value={toId} onChange={e => setToId(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl outline-none font-bold">{wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select>
-              <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl outline-none font-bold" placeholder="จำนวนเงิน" />
-              <input type="text" value={note} onChange={e => setNote(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl outline-none font-bold" placeholder="บันทึก" />
-              <button onClick={handleTransfer} className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg">โอนเงิน</button>
-            </div>
-          </div>
-        </div>
-      );
     };
 
     if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>;
@@ -517,9 +559,9 @@
 
     return (
       <div className="bg-gray-50 min-h-screen">
-        {activeTab === 'dashboard' && <ScreenDashboard />}
-        {activeTab === 'add' && <ScreenAdd />}
-        {activeTab === 'history' && <ScreenHistory />}
+        {activeTab === 'dashboard' && <ScreenDashboard transactions={transactions} categories={categories} wallets={wallets} activeWalletId={activeWalletId} setActiveWalletId={setActiveWalletId} />}
+        {activeTab === 'add' && <ScreenAdd editTx={editTx} setEditTx={setEditTx} setActiveTab={setActiveTab} categories={categories} wallets={wallets} setTransactions={setTransactions} saveToBackend={saveToBackend} user={user} showNotification={showNotification} requestConfirm={requestConfirm} />}
+        {activeTab === 'history' && <ScreenHistory transactions={transactions} categories={categories} activeWalletId={activeWalletId} setEditTx={setEditTx} setActiveTab={setActiveTab} />}
         {activeTab === 'settings' && (
           <div className="p-5 pt-8 bg-white min-h-screen">
             <h2 className="text-2xl font-bold mb-6">ตั้งค่า</h2>
@@ -546,9 +588,9 @@
           <button onClick={() => setActiveTab('me')} className={`p-2 ${activeTab === 'me' ? 'text-blue-600' : 'text-gray-300'}`}><Icons.User /></button>
         </nav>
         {notification && <div className="fixed top-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl shadow-2xl z-[200] bg-gray-900 text-white font-bold">{notification.msg}</div>}
-        {showCategoryManager && <CategoryManager onClose={() => setShowCategoryManager(false)} />}
-        {showWalletManager && <WalletManager onClose={() => setShowWalletManager(false)} />}
-        {showTransferModal && <TransferModal onClose={() => setShowTransferModal(false)} />}
+        {showCategoryManager && <CategoryManager onClose={() => setShowCategoryManager(false)} categories={categories} setCategories={setCategories} saveToBackend={saveToBackend} requestConfirm={requestConfirm} />}
+        {showWalletManager && <WalletManager onClose={() => setShowWalletManager(false)} wallets={wallets} setWallets={setWallets} saveToBackend={saveToBackend} requestConfirm={requestConfirm} />}
+        {showTransferModal && <TransferModal onClose={() => setShowTransferModal(false)} wallets={wallets} setTransactions={setTransactions} user={user} showNotification={showNotification} toLocalDateString={toLocalDateString} generateId={generateId} />}
         <ConfirmModal isOpen={confirmDialog.isOpen} title={confirmDialog.title} message={confirmDialog.message} onConfirm={() => { confirmDialog.onConfirm(); setConfirmDialog({ ...confirmDialog, isOpen: false }); }} onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} />
       </div>
     );
