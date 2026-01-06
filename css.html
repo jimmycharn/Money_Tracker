@@ -1,43 +1,188 @@
 <style>
-  body { font-family: 'Sarabun', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
-  .hide-scroll::-webkit-scrollbar { display: none; }
-  .amount-input { background: transparent; border: none; outline: none; text-align: center; width: 100%; }
-  .amount-input::placeholder { color: rgba(0,0,0,0.1); }
-  
-  @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .animate-slide-up { animation: slide-up 0.3s ease-out; }
-  @keyframes fade-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-  .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
-  @keyframes scale-in { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-  .animate-scale-in { animation: scale-in 0.2s ease-out forwards; }
-
-  .ai-glow { animation: glow 2s infinite; }
-  @keyframes glow { 0% { box-shadow: 0 0 5px #a855f7; } 50% { box-shadow: 0 0 20px #a855f7; } 100% { box-shadow: 0 0 5px #a855f7; } }
-  .nav-add-glow { animation: nav-glow 2s infinite; }
-  @keyframes nav-glow { 0% { box-shadow: 0 0 5px #2563eb; } 50% { box-shadow: 0 0 25px #2563eb; } 100% { box-shadow: 0 0 5px #2563eb; } }
-  .loading-dots:after { content: ' .'; animation: dots 1s steps(5, end) infinite;}
-  @keyframes dots { 0%, 20% { content: ' .'; } 40% { content: ' ..'; } 60% { content: ' ...'; } 80%, 100% { content: ' ....'; } }
-  
-  .chart-segment { transition: stroke-dasharray 1s cubic-bezier(0.4, 0, 0.2, 1), stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.8s ease; }
-  .progress-bar-fill { transition: width 1s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s ease; }
-  
-  /* แก้ไข: ปรับขนาดช่อง OTP ให้เล็กลงเพื่อไม่ให้ล้นหน้าจอมือถือ */
-  .otp-input { 
-    width: 2.4rem; 
-    height: 3rem; 
-    text-align: center; 
-    font-size: 1.25rem; 
-    font-weight: bold; 
-    background: #f3f4f6; 
-    border: 2px solid transparent; 
-    border-radius: 0.75rem; 
-    outline: none; 
-    transition: all 0.2s; 
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background-color: #f8fafc;
+    overflow-x: hidden;
   }
-  .otp-input:focus { border-color: #3b82f6; background: white; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
-  
+
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+  }
+
+  .hide-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .amount-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+    width: 100%;
+  }
+
+  .amount-input::placeholder {
+    color: rgba(0, 0, 0, 0.1);
+  }
+
+  @keyframes slide-up {
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+
+  @keyframes scale-in {
+    from {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.2s ease-out forwards;
+  }
+
+  .ai-glow {
+    animation: glow 2s infinite;
+  }
+
+  @keyframes glow {
+    0% {
+      box-shadow: 0 0 5px #a855f7;
+    }
+
+    50% {
+      box-shadow: 0 0 20px #a855f7;
+    }
+
+    100% {
+      box-shadow: 0 0 5px #a855f7;
+    }
+  }
+
+  .nav-add-glow {
+    animation: nav-glow 2s infinite;
+  }
+
+  @keyframes nav-glow {
+    0% {
+      box-shadow: 0 0 5px #2563eb;
+    }
+
+    50% {
+      box-shadow: 0 0 25px #2563eb;
+    }
+
+    100% {
+      box-shadow: 0 0 5px #2563eb;
+    }
+  }
+
+  .loading-dots:after {
+    content: ' .';
+    animation: dots 1s steps(5, end) infinite;
+  }
+
+  @keyframes dots {
+
+    0%,
+    20% {
+      content: ' .';
+    }
+
+    40% {
+      content: ' ..';
+    }
+
+    60% {
+      content: ' ...';
+    }
+
+    80%,
+    100% {
+      content: ' ....';
+    }
+  }
+
+  .chart-segment {
+    transition: stroke-dasharray 1s cubic-bezier(0.4, 0, 0.2, 1), stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.8s ease;
+  }
+
+  .progress-bar-fill {
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s ease;
+  }
+
+  .trend-line {
+    transition: d 1s ease-in-out;
+  }
+
+  .trend-dot {
+    transition: cy 1s ease-in-out, cx 1s ease-in-out;
+  }
+
+  .wallet-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .wallet-card.active {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+  }
+
+  /* แก้ไข: ปรับขนาดช่อง OTP ให้เล็กลงเพื่อไม่ให้ล้นหน้าจอมือถือ */
+  .otp-input {
+    width: 2.4rem;
+    height: 3rem;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: bold;
+    background: #f3f4f6;
+    border: 2px solid transparent;
+    border-radius: 0.75rem;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .otp-input:focus {
+    border-color: #3b82f6;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  }
+
   @media (min-width: 380px) {
     .otp-input {
       width: 2.8rem;

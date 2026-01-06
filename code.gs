@@ -4,6 +4,7 @@ const SHEET_TRANSACTIONS = 'Transactions';
 const SHEET_CATEGORIES = 'Categories';
 const SHEET_SETTINGS = 'Settings';
 const SHEET_USERS = 'Users';
+const SHEET_WALLETS = 'Wallets';
 
 // **************************************************************************
 // 2. GEMINI API KEY
@@ -27,13 +28,23 @@ function setupDatabase() {
     ss.insertSheet(SHEET_USERS).appendRow(['Username', 'Password', 'Name', 'Email', 'Created', 'IsLoggedIn']);
   }
   if (!ss.getSheetByName(SHEET_TRANSACTIONS)) {
-    ss.insertSheet(SHEET_TRANSACTIONS).appendRow(['ID', 'Date', 'Type', 'CategoryID', 'Amount', 'Note', 'Timestamp', 'Username']);
+    ss.insertSheet(SHEET_TRANSACTIONS).appendRow(['ID', 'Date', 'Type', 'CategoryID', 'Amount', 'Note', 'Timestamp', 'Username', 'WalletID']);
+  } else {
+    // Migration: Add WalletID column if missing
+    const sheet = ss.getSheetByName(SHEET_TRANSACTIONS);
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    if (findColumnIndex(headers, 'WalletID') === -1) {
+      sheet.getRange(1, headers.length + 1).setValue('WalletID');
+    }
   }
   if (!ss.getSheetByName(SHEET_CATEGORIES)) {
     ss.insertSheet(SHEET_CATEGORIES).appendRow(['ID', 'Name', 'Type', 'Budget', 'Color', 'Username']);
   }
   if (!ss.getSheetByName(SHEET_SETTINGS)) {
     ss.insertSheet(SHEET_SETTINGS).appendRow(['Key', 'Value', 'Username']);
+  }
+  if (!ss.getSheetByName(SHEET_WALLETS)) {
+    ss.insertSheet(SHEET_WALLETS).appendRow(['ID', 'Name', 'Type', 'InitialBalance', 'Color', 'Username']);
   }
 }
 
@@ -106,6 +117,7 @@ function doSignup(username, password, name, email) {
     }
     userSheet.appendRow([username, hashPassword(password), name, email, new Date(), 'TRUE']);
     createDefaultCategories(username);
+    createDefaultWallets(username);
     return { success: true, user: { username, name, email } };
   } catch (e) { return { success: false, message: e.toString() }; }
 }
@@ -209,6 +221,21 @@ function createDefaultCategories(username) {
   defaults.forEach(row => sheet.appendRow(row));
 }
 
+function createDefaultWallets(username) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(SHEET_WALLETS);
+  if (!sheet) {
+    setupDatabase();
+    sheet = ss.getSheetByName(SHEET_WALLETS);
+  }
+  if (!sheet) return;
+  const defaults = [
+    ['w1_' + Date.now(), 'เงินสด', 'cash', 0, '#4A5568', username],
+    ['w2_' + Date.now(), 'บัญชีธนาคาร', 'bank', 0, '#3182CE', username]
+  ];
+  defaults.forEach(row => sheet.appendRow(row));
+}
+
 // --- 6. DATA FUNCTIONS ---
 function getInitialData(username) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -233,10 +260,26 @@ function getInitialData(username) {
   };
   const transactions = getSheetData(SHEET_TRANSACTIONS);
   const categories = getSheetData(SHEET_CATEGORIES);
+  const wallets = getSheetData(SHEET_WALLETS);
   const settingsRaw = getSheetData(SHEET_SETTINGS);
   const settings = { cutoffDay: 1 };
   settingsRaw.forEach(s => settings[s.key] = s.value);
-  return { status: 'success', transactions, categories, settings };
+
+  // Migration: If no wallets exist for user, create defaults
+  if (wallets.length === 0) {
+    createDefaultWallets(username);
+    const retryWallets = getSheetData(SHEET_WALLETS);
+    if (retryWallets.length > 0) return getInitialData(username);
+    return { status: 'error', message: 'Could not create default wallets' };
+  }
+
+  // Migration: Assign default wallet to transactions without walletId
+  const defaultWalletId = wallets[0].id;
+  transactions.forEach(t => {
+    if (!t.walletId) t.walletId = defaultWalletId;
+  });
+
+  return { status: 'success', transactions, categories, wallets, settings };
 }
 
 function exportData(username) {
@@ -266,7 +309,7 @@ function exportData(username) {
 function saveTransaction(tx, username) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(SHEET_TRANSACTIONS);
-  sheet.appendRow([tx.id, tx.date, tx.type, tx.categoryId, tx.amount, tx.note, new Date(), username]);
+  sheet.appendRow([tx.id, tx.date, tx.type, tx.categoryId, tx.amount, tx.note, new Date(), username, tx.walletId]);
   return { success: true };
 }
 
@@ -278,7 +321,7 @@ function editTransaction(tx, username) {
   const uIdx = findColumnIndex(data[0], 'Username');
   for(let i=1; i<data.length; i++) {
     if(String(data[i][idIdx]) == String(tx.id) && String(data[i][uIdx]) == String(username)) { 
-       sheet.getRange(i+1, 1, 1, 8).setValues([[tx.id, tx.date, tx.type, tx.categoryId, tx.amount, tx.note, new Date(), username]]);
+       sheet.getRange(i+1, 1, 1, 9).setValues([[tx.id, tx.date, tx.type, tx.categoryId, tx.amount, tx.note, new Date(), username, tx.walletId]]);
        return { success: true };
     }
   }
@@ -310,6 +353,45 @@ function updateCategories(cats, username) {
   }
   cats.forEach(c => sheet.appendRow([c.id, c.name, c.type, c.budget || 0, c.color, username]));
   return { success: true };
+}
+
+function updateWallets(wallets, username) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(SHEET_WALLETS);
+  const data = sheet.getDataRange().getValues();
+  let uIdx = findColumnIndex(data[0], 'Username');
+  if (uIdx === -1) uIdx = data[0].length - 1;
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][uIdx]) === String(username)) sheet.deleteRow(i + 1);
+  }
+  wallets.forEach(w => sheet.appendRow([w.id, w.name, w.type, w.initialbalance || 0, w.color, username]));
+  return { success: true };
+}
+
+function transferBetweenWallets(fromId, toId, amount, date, note, username) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(SHEET_TRANSACTIONS);
+    const timestamp = new Date();
+    
+    // Create two transactions: one out from source, one in to destination
+    // Use a special category or note to identify as transfer
+    const outTxId = 'trf_out_' + generateId();
+    const inTxId = 'trf_in_' + generateId();
+    
+    // We don't have a specific "Transfer" category in the default list, 
+    // but we can use "อื่นๆ" or just leave categoryId empty if the frontend handles it.
+    // For now, let's assume the frontend provides a categoryId or we use a fallback.
+    
+    sheet.appendRow([outTxId, date, 'expense', '', amount, `[โอนออก] ${note}`, timestamp, username, fromId]);
+    sheet.appendRow([inTxId, date, 'income', '', amount, `[โอนเข้า] ${note}`, timestamp, username, toId]);
+    
+    return { success: true };
+  } catch (e) { return { success: false, error: e.toString() }; }
+}
+
+function generateId() {
+  return Math.random().toString(36).substr(2, 9);
 }
 
 function saveSettings(key, value, username) {
