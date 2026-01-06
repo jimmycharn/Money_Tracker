@@ -1,0 +1,681 @@
+<script type="text/babel">
+  const { useState, useEffect, useMemo, useRef } = React;
+
+  const toLocalDateString = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const formatCurrency = (amount) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(amount);
+  const generateId = () => Math.random().toString(36).substr(2, 9);
+
+  const Icons = {
+    PieChart: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>,
+    Calendar: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>,
+    Settings: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path></svg>,
+    List: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>,
+    PlusCircle: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>,
+    Trash2: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
+    X: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+    User: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>,
+    ChevronRight: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>,
+    Sparkles: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg>,
+    LogOut: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>,
+    AlertCircle: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>,
+    Mail: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>,
+    Lock: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+  };
+
+  const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, type = 'danger' }) => {
+    if (!isOpen) return null;
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm animate-fade-in">
+        <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-scale-in text-center">
+          <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${type === 'danger' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
+            <Icons.AlertCircle size={40} />
+          </div>
+          <h3 className="text-xl font-black text-gray-800 mb-2">{title}</h3>
+          <p className="text-gray-500 text-sm mb-8 leading-relaxed">{message}</p>
+          <div className="flex gap-3">
+            <button onClick={onCancel} className="flex-1 py-4 bg-gray-50 text-gray-500 font-bold rounded-2xl active:scale-95 transition-all">ยกเลิก</button>
+            <button onClick={onConfirm} className={`flex-1 py-4 text-white font-bold rounded-2xl active:scale-95 transition-all shadow-lg ${type === 'danger' ? 'bg-red-500 shadow-red-100' : 'bg-blue-600 shadow-blue-100'}`}>ยืนยัน</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const ScreenAuth = ({ onLogin }) => {
+    const [mode, setMode] = useState('login');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [emailHint, setEmailHint] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
+
+    const otpRefs = useRef([]);
+
+    const handleSubmit = (e) => {
+      if (e) e.preventDefault();
+      setLoading(true); setError(''); setSuccessMsg('');
+
+      const handler = (res) => {
+        setLoading(false);
+        if (res.success) {
+          if (mode === 'login' || mode === 'signup') {
+            localStorage.setItem('money_tracker_user', JSON.stringify(res.user));
+            onLogin(res.user);
+          } else if (mode === 'forgot') {
+            setUsername(res.username);
+            setEmailHint(res.emailHint);
+            setMode('otp');
+          } else if (mode === 'reset') {
+            setSuccessMsg('เปลี่ยนรหัสผ่านสำเร็จ! กรุณาเข้าสู่ระบบด้วยรหัสใหม่');
+            setMode('login');
+            setPassword('');
+          }
+        } else { setError(res.message); }
+      };
+
+      if (typeof google !== 'undefined') {
+        if (mode === 'login') google.script.run.withSuccessHandler(handler).doLogin(username, password);
+        else if (mode === 'signup') google.script.run.withSuccessHandler(handler).doSignup(username, password, name, email);
+        else if (mode === 'forgot') google.script.run.withSuccessHandler(handler).sendResetOTP(username);
+        else if (mode === 'reset') google.script.run.withSuccessHandler(handler).verifyAndResetPassword(username, otp.join(''), password);
+      }
+    };
+
+    const handleOtpChange = (index, value) => {
+      const char = value.slice(-1);
+      if (!/^\d*$/.test(char)) return;
+      const newOtp = [...otp];
+      newOtp[index] = char;
+      setOtp(newOtp);
+      if (char && index < 5) otpRefs.current[index + 1].focus();
+    };
+
+    const handleOtpKeyDown = (index, e) => {
+      if (e.key === 'Backspace' && !otp[index] && index > 0) otpRefs.current[index - 1].focus();
+    };
+
+    const isOtpComplete = otp.every(d => d !== '');
+
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-500 to-indigo-600">
+        <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-auto animate-scale-in">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
+              {mode === 'forgot' ? <Icons.Mail size={32} /> : mode === 'otp' ? <Icons.Lock size={32} /> : <Icons.PieChart size={32} />}
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800">Money Tracker</h1>
+            <p className="text-gray-500 text-sm mt-1">
+              {mode === 'login' ? 'เข้าสู่ระบบ' :
+                mode === 'signup' ? 'สมัครสมาชิกใหม่' :
+                  mode === 'forgot' ? 'กู้คืนรหัสผ่าน' :
+                    mode === 'otp' ? 'ยืนยันตัวตน' : 'ตั้งรหัสผ่านใหม่'}
+            </p>
+          </div>
+
+          {error && <div className="mb-4 p-3 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100 text-center">{error}</div>}
+          {successMsg && <div className="mb-4 p-3 bg-green-50 text-green-600 text-xs rounded-xl border border-green-100 text-center">{successMsg}</div>}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === 'signup' && (
+              <>
+                <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-100 transition-all" placeholder="ชื่อเล่น" required />
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-100 transition-all" placeholder="อีเมลสำหรับกู้รหัส" required />
+              </>
+            )}
+
+            {(mode === 'login' || mode === 'signup' || mode === 'forgot') && (
+              <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-100 transition-all" placeholder={mode === 'forgot' ? "Username หรือ อีเมล" : "Username"} required />
+            )}
+
+            {(mode === 'login' || mode === 'signup' || mode === 'reset') && (
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-100 transition-all" placeholder={mode === 'reset' ? "รหัสผ่านใหม่" : "Password"} required />
+            )}
+
+            {mode === 'otp' && (
+              <div className="flex flex-col items-center">
+                <p className="text-[10px] text-gray-400 mb-4 text-center">รหัสส่งไปที่ <span className="text-blue-600 font-bold">{emailHint}</span> แล้ว</p>
+                {/* แก้ไข: ปรับลด Gap และการจัดเรียงให้ไม่ล้นหน้าจอ */}
+                <div className="flex justify-center w-full gap-1.5 px-1">
+                  {otp.map((digit, idx) => (
+                    <input key={idx} ref={el => otpRefs.current[idx] = el} type="text" inputMode="numeric" value={digit} onChange={e => handleOtpChange(idx, e.target.value)} onKeyDown={e => handleOtpKeyDown(idx, e)} className="otp-input" />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <button disabled={loading || (mode === 'otp' && !isOtpComplete)} type={mode === 'otp' ? 'button' : 'submit'} onClick={mode === 'otp' ? () => setMode('reset') : null} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg active:scale-95 disabled:opacity-70 mt-2 transition-all">
+              {loading ? 'กำลังโหลด...' :
+                mode === 'login' ? 'เข้าสู่ระบบ' :
+                  mode === 'signup' ? 'สมัครสมาชิก' :
+                    mode === 'forgot' ? 'ส่งรหัส OTP' :
+                      mode === 'otp' ? 'ยืนยันรหัส' : 'อัปเดตรหัสผ่าน'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center space-y-2">
+            {mode === 'login' && (
+              <>
+                <button onClick={() => setMode('signup')} className="block w-full text-sm text-gray-500 hover:text-blue-600 font-medium">ยังไม่มีบัญชี? สมัครสมาชิก</button>
+                <button onClick={() => setMode('forgot')} className="block w-full text-xs text-gray-400 hover:text-blue-500 underline">ลืมรหัสผ่าน?</button>
+              </>
+            )}
+            {mode !== 'login' && (
+              <button onClick={() => { setMode('login'); setOtp(['', '', '', '', '', '']); setError(''); }} className="text-sm text-blue-600 font-bold">กลับไปหน้าล็อกอิน</button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  function MoneyTrackerApp() {
+    const [user, setUser] = useState(null);
+    const [activeTab, setActiveTab] = useState('dashboard');
+    const [loading, setLoading] = useState(true);
+    const [transactions, setTransactions] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [settings, setSettings] = useState({ cutoffDay: 1 });
+    const [notification, setNotification] = useState(null);
+    const [editTx, setEditTx] = useState(null);
+    const [showCategoryManager, setShowCategoryManager] = useState(false);
+    const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
+
+    const requestConfirm = (title, message, callback) => {
+      setConfirmDialog({ isOpen: true, title, message, onConfirm: () => { callback(); closeConfirm(); } });
+    };
+    const closeConfirm = () => setConfirmDialog({ ...confirmDialog, isOpen: false });
+
+    useEffect(() => {
+      const stored = localStorage.getItem('money_tracker_user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        if (typeof google !== 'undefined') {
+          google.script.run.withSuccessHandler(res => { if (res.success) setUser(u); else setLoading(false); }).checkSession(u.username);
+        }
+      } else { setLoading(false); }
+    }, []);
+
+    useEffect(() => {
+      if (user) {
+        setLoading(true);
+        if (typeof google !== 'undefined') {
+          google.script.run.withSuccessHandler(data => {
+            setLoading(false);
+            if (data.status === 'success') { setTransactions(data.transactions); setCategories(data.categories); setSettings(data.settings); }
+          }).getInitialData(user.username);
+        }
+      }
+    }, [user]);
+
+    const showNotification = (msg, type = 'success') => {
+      setNotification({ msg, type });
+      setTimeout(() => setNotification(null), 3000);
+    };
+
+    const saveToBackend = (type, data) => {
+      if (typeof google !== 'undefined' && user) {
+        const h = (res) => { if (!res.success) showNotification(res.error, 'error'); };
+        if (type === 'transaction') {
+          if (editTx) google.script.run.withSuccessHandler(h).editTransaction(data, user.username);
+          else google.script.run.withSuccessHandler(h).saveTransaction(data, user.username);
+        }
+        if (type === 'delete_transaction') google.script.run.withSuccessHandler(h).deleteTransaction(data, user.username);
+        if (type === 'categories') google.script.run.withSuccessHandler(h).updateCategories(data, user.username);
+        if (type === 'settings') google.script.run.withSuccessHandler(h).saveSettings(data.key, data.value, user.username);
+      }
+    };
+
+    const ScreenDashboard = () => {
+      const [dashboardTab, setDashboardTab] = useState('expense');
+      const today = new Date();
+      const monthOptions = useMemo(() => {
+        const options = [];
+        for (let i = 0; i < 12; i++) {
+          const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+          const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+          options.push({ label: d.toLocaleString('th-TH', { month: 'long', year: 'numeric' }), startDate: toLocalDateString(d), endDate: toLocalDateString(new Date(d.getFullYear(), d.getMonth(), lastDay)), value: i, daysCount: lastDay });
+        }
+        return options;
+      }, []);
+      const [selMonth, setSelMonth] = useState(monthOptions[0]);
+
+      const filtered = transactions.filter(t => t.date >= selMonth.startDate && t.date <= selMonth.endDate && t.type === dashboardTab);
+      const totalDisplay = filtered.reduce((s, t) => s + t.amount, 0);
+      const totalExpAll = transactions.filter(t => t.date >= selMonth.startDate && t.date <= selMonth.endDate && t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      const totalIncAll = transactions.filter(t => t.date >= selMonth.startDate && t.date <= selMonth.endDate && t.type === 'income').reduce((s, t) => s + t.amount, 0);
+      const netBalance = totalIncAll - totalExpAll;
+
+      const categoryAgg = filtered.reduce((acc, curr) => {
+        if (!acc[curr.categoryId]) acc[curr.categoryId] = 0;
+        acc[curr.categoryId] += curr.amount;
+        return acc;
+      }, {});
+
+      const chartData = Object.keys(categoryAgg).map(id => {
+        const c = categories.find(cat => cat.id === id) || { name: 'อื่นๆ', color: '#ccc', budget: 0 };
+        return { id, name: c.name, color: c.color, value: categoryAgg[id], budget: c.budget || 0 };
+      }).sort((a, b) => b.value - a.value);
+
+      return (
+        <div className="pb-24 pt-6 px-4 min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto w-full">
+          <div className="flex justify-center mb-6">
+            <div className="w-full max-w-[220px]">
+              <select value={selMonth.value} onChange={e => setSelMonth(monthOptions[e.target.value])} className="w-full bg-white px-4 py-2 rounded-full shadow-sm text-sm font-bold border border-gray-200 outline-none appearance-none text-center">
+                {monthOptions.map((o, i) => <option key={i} value={i}>{o.label}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 rounded-[2rem] shadow-xl mb-6 text-white text-center animate-fade-in">
+            <div className="text-xs font-extrabold uppercase opacity-80 tracking-widest mb-1">เงินเหลือเก็บสุทธิ</div>
+            <div className="text-4xl font-black">{formatCurrency(netBalance)}</div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div onClick={() => setDashboardTab('expense')} className={`p-4 rounded-3xl border-2 transition-all flex flex-col items-center ${dashboardTab === 'expense' ? 'bg-pink-50 border-pink-200 shadow-md scale-[1.02]' : 'bg-white border-transparent opacity-70 shadow-sm'}`}>
+              <div className="text-xs text-gray-400 font-extrabold uppercase mb-1">รายจ่ายรวม</div>
+              <div className="text-xl font-bold text-pink-600">{formatCurrency(totalExpAll)}</div>
+              <div className="mt-2 pt-2 border-t border-pink-100 w-full text-center">
+                <div className="text-[10px] text-gray-400 font-bold uppercase leading-none">เฉลี่ย / วัน</div>
+                <div className="text-sm font-black text-pink-500">฿{(totalExpAll / selMonth.daysCount).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+              </div>
+            </div>
+            <div onClick={() => setDashboardTab('income')} className={`p-4 rounded-3xl border-2 transition-all flex flex-col items-center ${dashboardTab === 'income' ? 'bg-green-50 border-green-200 shadow-md scale-[1.02]' : 'bg-white border-transparent opacity-70 shadow-sm'}`}>
+              <div className="text-xs text-gray-400 font-extrabold uppercase mb-1">รายรับรวม</div>
+              <div className="text-xl font-bold text-green-600">{formatCurrency(totalIncAll)}</div>
+              <div className="mt-2 pt-2 border-t border-green-100 w-full text-center">
+                <div className="text-[10px] text-gray-400 font-bold uppercase leading-none">เฉลี่ย / วัน</div>
+                <div className="text-sm font-black text-green-600">฿{(totalIncAll / selMonth.daysCount).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-100 flex-1">
+            <div className="relative w-full aspect-square max-w-[260px] mx-auto mb-8 overflow-visible">
+              <svg viewBox="0 0 200 200" className="w-full h-full overflow-visible">
+                <text x="100" y="105" textAnchor="middle" className="fill-gray-700 font-bold text-xl">{formatCurrency(totalDisplay).replace('฿', '')}</text>
+                <g transform="rotate(-90 100 100)">
+                  {totalDisplay === 0 ? <circle cx="100" cy="100" r={65} fill="none" stroke="#f1f5f9" strokeWidth={24} /> : (() => {
+                    let cum = 0; const radius = 65; const circ = 2 * Math.PI * radius;
+                    return chartData.map((item, i) => {
+                      const pct = item.value / totalDisplay;
+                      const dash = `${pct * circ} ${circ}`;
+                      const off = -cum * circ;
+                      cum += pct;
+                      return <circle key={`${dashboardTab}-seg-${item.id}`} cx="100" cy="100" r={radius} fill="transparent" stroke={item.color} strokeWidth={24} strokeDasharray={dash} strokeDashoffset={off} className="chart-segment" strokeLinecap="round" />;
+                    });
+                  })()}
+                </g>
+                <g>
+                  {totalDisplay > 0 && (() => {
+                    let cum = 0;
+                    return chartData.map((item, i) => {
+                      const pct = item.value / totalDisplay;
+                      const midPct = cum + (pct / 2);
+                      cum += pct;
+                      if (pct < 0.01) return null;
+                      const angle = (midPct * 2 * Math.PI) - (Math.PI / 2);
+                      const r1 = 80; const r2 = 95;
+                      const x1 = 100 + r1 * Math.cos(angle); const y1 = 100 + r1 * Math.sin(angle);
+                      const x2 = 100 + r2 * Math.cos(angle); const y2 = 100 + r2 * Math.sin(angle);
+                      const isRight = Math.cos(angle) >= 0;
+                      return (
+                        <g key={`${dashboardTab}-lbl-${item.id}`} className="animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
+                          <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#cbd5e1" strokeWidth="1.2" />
+                          <text x={x2 + (isRight ? 4 : -4)} y={y2 + 4} textAnchor={isRight ? "start" : "end"} className="fill-gray-500 font-black" style={{ fontSize: '11px' }}>{(pct * 100).toFixed(0)}%</text>
+                        </g>
+                      );
+                    });
+                  })()}
+                </g>
+              </svg>
+            </div>
+            <div className="space-y-5 animate-fade-in" key={dashboardTab}>
+              {chartData.map((cat, i) => (
+                <div key={cat.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
+                  <div className="flex justify-between items-end text-sm mb-1.5 font-bold">
+                    <span className="text-gray-700">{cat.name}</span>
+                    <div className="text-right">
+                      <span className="text-gray-900">{formatCurrency(cat.value)}</span>
+                      {dashboardTab === 'expense' && cat.budget > 0 && <div className="text-xs text-gray-400 font-medium mt-0.5">งบ {formatCurrency(cat.budget)}</div>}
+                    </div>
+                  </div>
+                  <div className="h-2.5 w-full bg-slate-50 rounded-full overflow-hidden shadow-inner">
+                    <div className="h-full progress-bar-fill rounded-full" style={{ width: `${(cat.value / totalDisplay) * 100}%`, backgroundColor: cat.color }}></div>
+                  </div>
+                </div>
+              ))}
+              {chartData.length === 0 && <div className="text-center py-10 text-gray-300 font-bold italic">ไม่มีข้อมูล{dashboardTab === 'expense' ? 'รายจ่าย' : 'รายรับ'}</div>}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const ScreenAdd = () => {
+      const [type, setType] = useState(editTx ? editTx.type : 'expense');
+      const [amount, setAmount] = useState(editTx ? String(editTx.amount) : '');
+      const [date, setDate] = useState(editTx ? editTx.date : toLocalDateString(new Date()));
+      const [categoryId, setCategoryId] = useState(editTx ? editTx.categoryId : '');
+      const [note, setNote] = useState(editTx ? editTx.note : '');
+      const [showAI, setShowAI] = useState(false);
+      const [aiPrompt, setAiPrompt] = useState('');
+      const [isProcessing, setIsProcessing] = useState(false);
+
+      const handleSubmit = (e) => {
+        e.preventDefault(); if (!amount || !categoryId) return;
+        const newTx = { id: editTx ? editTx.id : generateId(), date, type, categoryId, amount: parseFloat(amount), note };
+        if (editTx) { setTransactions(prev => prev.map(t => t.id === editTx.id ? newTx : t)); saveToBackend('transaction', newTx); setEditTx(null); }
+        else { setTransactions(prev => [newTx, ...prev]); saveToBackend('transaction', newTx); }
+        setActiveTab('history');
+      };
+
+      const handleAI = () => {
+        if (!aiPrompt || !user) return;
+        setIsProcessing(true);
+        if (typeof google !== 'undefined') {
+          google.script.run.withSuccessHandler(res => {
+            setIsProcessing(false);
+            if (res.success) {
+              const d = res.data;
+              if (!d.amount || d.amount <= 0) { showNotification('AI ไม่สามารถระบุจำนวนเงินได้', 'error'); return; }
+              const txType = d.type || 'expense';
+              const txDate = d.date || toLocalDateString(new Date());
+              const txNote = d.note || aiPrompt;
+              const txAmount = parseFloat(d.amount);
+              let matchedCategoryId = null;
+              if (d.categoryName) {
+                const cleanAIName = d.categoryName.trim().toLowerCase();
+                let matched = categories.find(c => c.name.trim().toLowerCase() === cleanAIName && c.type === txType);
+                if (!matched) matched = categories.find(c => c.type === txType && (c.name.toLowerCase().includes(cleanAIName) || cleanAIName.includes(c.name.toLowerCase())));
+                if (!matched) matched = categories.find(c => c.name === 'อื่นๆ' && c.type === txType);
+                if (!matched) matched = categories.find(c => c.type === txType);
+                if (matched) matchedCategoryId = matched.id;
+              } else {
+                const fallback = categories.find(c => c.name === 'อื่นๆ' && c.type === txType) || categories.find(c => c.type === txType);
+                if (fallback) matchedCategoryId = fallback.id;
+              }
+              if (!matchedCategoryId) { showNotification('ไม่พบหมวดหมู่ที่เหมาะสม', 'error'); return; }
+              const newTx = { id: generateId(), date: txDate, type: txType, categoryId: matchedCategoryId, amount: txAmount, note: txNote };
+              setTransactions(prev => [newTx, ...prev]);
+              saveToBackend('transaction', newTx);
+              setShowAI(false);
+              setAiPrompt('');
+              const catName = categories.find(c => c.id === matchedCategoryId)?.name || 'อื่นๆ';
+              showNotification(`✅ บันทึกแล้ว: ${txType === 'income' ? 'รายรับ' : 'รายจ่าย'} ${formatCurrency(txAmount)} (${catName})`);
+              setActiveTab('history');
+            } else { showNotification(res.error || 'AI ไม่สามารถระบุข้อมูลได้', 'error'); }
+          }).withFailureHandler(() => { setIsProcessing(false); showNotification('ล้มเหลว กรุณาลองใหม่', 'error'); }).processWithGemini(aiPrompt, user.username);
+        }
+      };
+
+      return (
+        <div className={`min-h-screen ${type === 'expense' ? 'bg-pink-50' : 'bg-green-50'} flex flex-col max-w-md mx-auto w-full`}>
+          <div className="p-4 flex justify-between items-center px-6">
+            {editTx ? (
+              <button onClick={() => { requestConfirm('ลบรายการ?', 'ยืนยันลบรายการนี้?', () => { setTransactions(p => p.filter(t => t.id !== editTx.id)); saveToBackend('delete_transaction', editTx.id); setEditTx(null); setActiveTab('history'); }); }} className="bg-white p-2.5 rounded-full text-red-500 shadow-sm active:bg-red-50"><Icons.Trash2 size={20} /></button>
+            ) : <div className="w-10"></div>}
+            <h2 className="text-lg font-bold text-gray-800">{editTx ? 'แก้ไขรายการ' : 'รายการใหม่'}</h2>
+            <div className="flex gap-2">
+              {!editTx ? <button onClick={() => setShowAI(true)} className="bg-purple-600 p-2.5 rounded-full text-white shadow-lg ai-glow active:scale-95"><Icons.Sparkles size={20} /></button> : <button onClick={() => { setEditTx(null); setActiveTab('history'); }} className="bg-white p-2.5 rounded-full text-gray-500 shadow-sm active:bg-gray-50"><Icons.X size={20} /></button>}
+            </div>
+          </div>
+          <div className="flex flex-col items-center py-6">
+            <div className="flex gap-2 mb-6 bg-white/50 p-1 rounded-full shadow-sm">
+              <button onClick={() => setType('expense')} className={`px-6 py-2 rounded-full font-bold transition-all ${type === 'expense' ? 'bg-white text-pink-600 shadow-md' : 'text-gray-500'}`}>จ่าย</button>
+              <button onClick={() => setType('income')} className={`px-6 py-2 rounded-full font-bold transition-all ${type === 'income' ? 'bg-white text-green-600 shadow-md' : 'text-gray-500'}`}>รับ</button>
+            </div>
+            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className={`amount-input text-6xl font-bold ${type === 'expense' ? 'text-pink-600' : 'text-green-600'}`} placeholder="0" autoFocus />
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="mt-4 bg-white/60 px-4 py-2 rounded-full text-sm font-bold border-none outline-none shadow-sm" />
+          </div>
+          <div className="bg-white flex-1 rounded-t-[2.5rem] p-6 pb-32 shadow-2xl animate-slide-up relative z-10">
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-8"></div>
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="grid grid-cols-4 gap-4">
+                {categories.filter(c => c.type === type).map(cat => (
+                  <button key={cat.id} type="button" onClick={() => setCategoryId(cat.id)} className={`p-2 rounded-2xl flex flex-col items-center transition-all ${categoryId === cat.id ? 'bg-gray-100 ring-2 ring-gray-300 scale-105 shadow-sm' : 'hover:bg-gray-50'}`}>
+                    <div className="w-12 h-12 rounded-full text-white flex items-center justify-center font-bold shadow-sm" style={{ backgroundColor: cat.color }}>{cat.name[0]}</div>
+                    <span className="text-[10px] mt-1.5 font-bold text-gray-500 truncate w-full text-center">{cat.name}</span>
+                  </button>
+                ))}
+              </div>
+              <input type="text" value={note} onChange={e => setNote(e.target.value)} className="w-full p-5 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 transition-all font-medium shadow-inner" placeholder="บันทึก..." />
+              <button type="submit" className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg">บันทึก</button>
+            </form>
+          </div>
+
+          {showAI && (
+            <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-end justify-center" onClick={() => setShowAI(false)}>
+              <div className="bg-white w-full max-w-md rounded-t-[2.5rem] p-8 animate-slide-up shadow-2xl mx-auto" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 shadow-inner ai-glow"><Icons.Sparkles size={20} /></div>
+                    <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">AI Assistant</h3>
+                  </div>
+                  <button onClick={() => setShowAI(false)} className="bg-gray-100 p-2 rounded-full"><Icons.X size={20} className="text-gray-400" /></button>
+                </div>
+                <p className="text-gray-500 text-sm mb-4 leading-relaxed">พิมพ์สิ่งที่คุณจ่ายไป เช่น "ข้าวผัดกะเพรา 50 บาท" หรือ "ค่าแท็กซี่ 120"</p>
+                <textarea value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} className="w-full p-4 bg-purple-50 border border-purple-100 rounded-2xl outline-none focus:ring-2 focus:ring-purple-200 transition-all font-medium min-h-[100px] mb-6 shadow-inner text-gray-700" placeholder="บอกมาได้เลย..." autoFocus />
+                <button disabled={isProcessing || !aiPrompt} onClick={handleAI} className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-bold shadow-xl active:scale-95 transition-all disabled:opacity-70 flex items-center justify-center gap-2">
+                  {isProcessing ? <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> กำลังวิเคราะห์...</> : <><Icons.Sparkles size={20} /> ให้ AI ช่วยกรอก</>}
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    };
+
+    const ScreenHistory = () => {
+      const [filterType, setFilterType] = useState('all');
+      const [selCat, setSelCat] = useState(null);
+      const [start, setStart] = useState(toLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1)));
+      const [end, setEnd] = useState(toLocalDateString(new Date()));
+      const filtered = transactions.filter(t => (t.date >= start && t.date <= end) && (filterType === 'all' || t.type === filterType) && (!selCat || t.categoryId === selCat)).sort((a, b) => b.date.localeCompare(a.date));
+      const total = filtered.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
+      const grouped = filtered.reduce((acc, t) => { if (!acc[t.date]) acc[t.date] = []; acc[t.date].push(t); return acc; }, {});
+      return (
+        <div className="pb-24 pt-6 px-4 min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto w-full">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold text-gray-800">ประวัติ</h2>
+            <div className="flex bg-white rounded-lg p-1 shadow-sm border border-gray-100">
+              {['all', 'expense', 'income'].map(m => <button key={m} onClick={() => { setFilterType(m); setSelCat(null); }} className={`px-3 py-1 text-xs rounded font-bold transition-all ${filterType === m ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-400'}`}>{m === 'all' ? 'ทั้งหมด' : (m === 'expense' ? 'จ่าย' : 'รับ')}</button>)}
+            </div>
+          </div>
+          <div className="bg-white p-3 rounded-xl mb-4 flex gap-2 border border-gray-100 shadow-sm mx-1">
+            <input type="date" value={start} onChange={e => setStart(e.target.value)} className="flex-1 text-xs font-bold outline-none bg-transparent" />
+            <div className="w-px bg-gray-100"></div>
+            <input type="date" value={end} onChange={e => setEnd(e.target.value)} className="flex-1 text-xs font-bold outline-none bg-transparent" />
+          </div>
+          <div className="flex overflow-x-auto gap-2 mb-4 hide-scroll px-1">
+            <button onClick={() => setSelCat(null)} className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${!selCat ? 'bg-gray-800 text-white shadow-lg' : 'bg-white text-gray-500 border border-gray-200'}`}>ทั้งหมด</button>
+            {categories.filter(c => filterType === 'all' || c.type === filterType).map(c => <button key={c.id} onClick={() => setSelCat(selCat === c.id ? null : c.id)} className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap border flex items-center gap-1.5 transition-all ${selCat === c.id ? 'text-white shadow-lg' : 'bg-white text-gray-500 border border-gray-200'}`} style={selCat === c.id ? { backgroundColor: c.color } : {}}><div className="w-2 h-2 rounded-full" style={{ backgroundColor: selCat === c.id ? 'white' : c.color }}></div>{c.name}</button>)}
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 mb-6 flex justify-between items-center shadow-sm mx-1">
+            <div><div className="text-[10px] text-gray-400 font-extrabold uppercase">ยอดสุทธิคัดกรอง</div><div className={`text-2xl font-extrabold ${total >= 0 ? 'text-green-600' : 'text-red-500'}`}>{formatCurrency(total)}</div></div>
+            <div className="text-right"><div className="text-[10px] text-gray-400 font-extrabold uppercase">รายการ</div><div className="text-xl font-bold text-gray-700">{filtered.length}</div></div>
+          </div>
+          <div className="space-y-6">
+            {Object.keys(grouped).map(date => {
+              const daySum = grouped[date].reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0);
+              return (
+                <div key={date}>
+                  <div className="flex justify-between items-end mb-2.5 px-2">
+                    <div className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest">{new Date(date).toLocaleDateString('th-TH', { dateStyle: 'medium' })}</div>
+                    <div className={`text-xs font-black ${daySum >= 0 ? 'text-green-600' : 'text-red-500'}`}>{daySum >= 0 ? '+' : ''}{daySum.toLocaleString()}</div>
+                  </div>
+                  <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm mx-1">
+                    {grouped[date].map(t => {
+                      const cat = categories.find(c => c.id === t.categoryId) || { name: 'อื่นๆ', color: '#ccc' };
+                      return (
+                        <div key={t.id} onClick={() => { setEditTx(t); setActiveTab('add'); }} className="p-4 flex justify-between items-center border-b border-gray-50 last:border-0 active:bg-gray-50 transition-colors">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl text-white flex items-center justify-center font-bold text-lg shadow-sm" style={{ backgroundColor: cat.color }}>{cat.name[0]}</div>
+                            <div><div className="font-bold text-gray-800">{cat.name}</div><div className="text-xs text-gray-400 leading-none">{t.note}</div></div>
+                          </div>
+                          <div className={`font-black text-lg ${t.type === 'income' ? 'text-green-600' : 'text-gray-800'}`}>{t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    };
+
+    const CategoryManager = ({ onClose }) => {
+      const [tab, setTab] = useState('expense');
+      const [editing, setEditing] = useState(null);
+      const [tempName, setTempName] = useState('');
+      const [tempBudget, setTempBudget] = useState('');
+      const [tempColor, setTempColor] = useState('#000000');
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const openEditor = (cat) => { setEditing(cat); setTempName(cat ? cat.name : ''); setTempBudget(cat && cat.budget ? String(cat.budget) : ''); setTempColor(cat ? cat.color : '#000000'); setIsModalOpen(true); };
+      const handleSave = () => {
+        if (!tempName) return;
+        let newCats = [...categories];
+        if (editing) newCats = newCats.map(c => c.id === editing.id ? { ...c, name: tempName, budget: parseFloat(tempBudget) || 0, color: tempColor } : c);
+        else newCats.push({ id: generateId(), name: tempName, type: tab, budget: parseFloat(tempBudget) || 0, color: tempColor });
+        setCategories(newCats); saveToBackend('categories', newCats); setIsModalOpen(false);
+      };
+      return (
+        <div className="fixed inset-0 bg-white z-50 flex flex-col max-w-md mx-auto w-full shadow-2xl">
+          <div className="p-4 border-b flex justify-between items-center bg-white shadow-sm px-6">
+            <button onClick={onClose}><Icons.X size={24} className="text-gray-500" /></button>
+            <h2 className="font-extrabold text-lg text-gray-800">จัดการหมวดหมู่</h2><div className="w-10"></div>
+          </div>
+          <div className="p-4 flex-1 overflow-y-auto bg-gray-50 pb-32">
+            <div className="flex gap-2 mb-6 bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm mx-1">
+              <button onClick={() => setTab('expense')} className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all ${tab === 'expense' ? 'bg-pink-100 text-pink-700 shadow-sm' : 'text-gray-400'}`}>รายจ่าย</button>
+              <button onClick={() => setTab('income')} className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all ${tab === 'income' ? 'bg-green-100 text-green-700 shadow-sm' : 'text-gray-400'}`}>รายรับ</button>
+            </div>
+            <div className="space-y-3 px-1">
+              {categories.filter(c => c.type === tab).map(c => <div key={c.id} onClick={() => openEditor(c)} className="bg-white p-4 rounded-2xl border border-gray-100 flex justify-between items-center shadow-sm active:bg-gray-50 transition-all"><div className="flex items-center gap-4"><div className="w-10 h-10 rounded-full border-2 border-white shadow-md" style={{ backgroundColor: c.color }}></div><span className="font-bold text-gray-700">{c.name}</span></div><div className="text-gray-400 text-xs font-bold bg-gray-50 px-3 py-1 rounded-full">{c.type === 'expense' && (c.budget > 0 ? `฿${c.budget.toLocaleString()}` : 'ไม่มีงบ')}</div></div>)}
+            </div>
+            <button onClick={() => openEditor(null)} className="w-[calc(100%-8px)] mx-auto mt-8 py-5 rounded-2xl font-extrabold text-white shadow-lg bg-indigo-600 active:scale-95 transition-all shadow-indigo-100">+ เพิ่มหมวดหมู่ใหม่</button>
+          </div>
+          {isModalOpen && (
+            <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-end justify-center" onClick={() => setIsModalOpen(false)}>
+              <div className="bg-white w-full max-w-md rounded-t-[2.5rem] p-8 animate-slide-up shadow-2xl mx-auto" onClick={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-8 px-1">
+                  {editing ? <button onClick={() => { requestConfirm('ลบหมวดหมู่?', 'ยืนยันที่จะลบหมวดหมู่หรือไม่?', () => { const newCats = categories.filter(c => c.id !== editing.id); setCategories(newCats); saveToBackend('categories', newCats); setIsModalOpen(false); }); }} className="text-red-500 text-xs font-bold flex gap-1.5 items-center bg-red-50 px-4 py-1.5 rounded-full"><Icons.Trash2 size={14} /> ลบ</button> : <div />}
+                  <h3 className="text-xl font-bold">ข้อมูลหมวดหมู่</h3>
+                  <button onClick={() => setIsModalOpen(false)} className="bg-gray-100 p-2 rounded-full"><Icons.X size={20} className="text-gray-400" /></button>
+                </div>
+                <div className="space-y-6 mb-10">
+                  <div><label className="text-[10px] font-extrabold text-gray-400 block mb-1 uppercase tracking-widest ml-1">ชื่อหมวด</label><input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold shadow-inner" /></div>
+                  {tab === 'expense' && <div><label className="text-[10px] font-extrabold text-gray-400 block mb-1 uppercase tracking-widest ml-1">งบประมาณรายเดือน</label><input type="number" value={tempBudget} onChange={e => setTempBudget(e.target.value)} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold shadow-inner" placeholder="ไม่ระบุงบ" /></div>}
+                  <div className="flex items-center gap-6"><label className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-widest ml-1">สีประจำหมวด</label><input type="color" value={tempColor} onChange={e => setTempColor(e.target.value)} className="h-12 w-24 rounded-xl cursor-pointer border-none bg-transparent" /></div>
+                </div>
+                <button onClick={handleSave} className="w-full py-5 bg-gray-900 text-white rounded-2xl font-extrabold shadow-xl active:scale-95 transition-all">บันทึกข้อมูล</button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const ScreenSettings = () => (
+      <div className="p-5 pt-8 bg-white min-h-screen">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">ตั้งค่า</h2>
+        <div className="space-y-4">
+          <div onClick={() => setShowCategoryManager(true)} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 cursor-pointer active:bg-gray-100 transition-all shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 shadow-inner"><Icons.List size={20} /></div>
+              <span className="font-bold text-gray-700">จัดการหมวดและงบ</span>
+            </div>
+            <Icons.ChevronRight size={20} className="text-gray-400" />
+          </div>
+          <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 shadow-inner"><Icons.Calendar size={20} /></div>
+              <span className="font-bold text-gray-700">รอบตัดงบ</span>
+            </div>
+            <div className="flex items-center gap-2 mt-2 ml-12">
+              <span className="text-sm text-gray-500">ทุกวันที่</span>
+              <select value={settings?.cutoffDay || 1} onChange={e => { const v = parseInt(e.target.value); setSettings({ ...settings, cutoffDay: v }); saveToBackend('settings', { key: 'cutoffDay', value: v }); }} className="bg-white border rounded px-2 py-1 text-sm font-bold shadow-sm outline-none">
+                {[...Array(28)].map((_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}
+              </select>
+              <span className="text-sm text-gray-500">ของเดือน</span>
+            </div>
+          </div>
+          <div onClick={() => {
+            if (typeof google !== 'undefined') {
+              showNotification('กำลังสร้างไฟล์...');
+              google.script.run.withSuccessHandler(res => {
+                if (res.success) {
+                  const win = window.open('', '_blank');
+                  if (win) {
+                    win.document.write('<html><head><title>Export CSV</title><meta charset="UTF-8"><style>body{font-family:sans-serif;padding:20px;background:#f5f5f5}pre{background:#fff;padding:15px;border-radius:8px;overflow:auto;max-height:400px}.btn{background:#4CAF50;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:bold;margin:10px 5px}.btn:hover{opacity:0.9}</style></head><body><h2>📊 ข้อมูล CSV พร้อมแล้ว</h2><p>กดปุ่มด้านล่างเพื่อ Download หรือ Copy</p><button class="btn" id="dl">📥 Download CSV</button><button class="btn" style="background:#2196F3" id="cp">📋 Copy</button><h3>ตัวอย่าง:</h3><pre id="csv"></pre><script>const csv=' + JSON.stringify(res.csv) + ';document.getElementById("csv").textContent=csv;document.getElementById("dl").onclick=function(){const a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);a.download="money_tracker_export.csv";a.click()};document.getElementById("cp").onclick=function(){navigator.clipboard.writeText(csv).then(()=>alert("คัดลอกแล้ว!"))};<\/script></body></html>');
+                    win.document.close();
+                    showNotification('✅ เปิดหน้าส่งออกแล้ว');
+                  } else { showNotification('กรุณาอนุญาต popup', 'error'); }
+                } else { showNotification(res.error || 'ส่งออกไม่สำเร็จ', 'error'); }
+              }).withFailureHandler(() => { showNotification('เกิดข้อผิดพลาด', 'error'); }).exportData(user.username);
+            }
+          }} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 cursor-pointer active:bg-gray-100 transition-all shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 shadow-inner"><Icons.List size={20} /></div>
+              <span className="font-bold text-gray-700">Export CSV</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+
+    const ScreenMe = () => (
+      <div className="p-5 pt-12 bg-gray-50 min-h-screen flex flex-col items-center max-w-md mx-auto pb-48 w-full px-6">
+        <div className="relative mb-6">
+          <div className="w-32 h-32 bg-gradient-to-tr from-blue-400 to-indigo-500 rounded-[2.5rem] flex items-center justify-center text-white text-6xl font-bold shadow-2xl border-4 border-white rotate-3"><span className="-rotate-3">{user.name[0]}</span></div>
+          <div className="absolute bottom-1 right-1 w-8 h-8 bg-green-500 border-4 border-white rounded-full animate-pulse shadow-lg"></div>
+        </div>
+        <h2 className="text-3xl font-black text-gray-800 mb-1 text-center">{user.name}</h2>
+        <p className="text-gray-400 font-bold mb-12 tracking-widest uppercase text-xs text-center">@{user.username}</p>
+        <div className="w-full bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden mb-10">
+          <div className="p-6 border-b border-gray-50 flex justify-between items-center"><div className="flex items-center gap-4 text-gray-600 font-bold"><Icons.User size={20} /> สถานะบัญชี</div><span className="text-green-600 text-[10px] font-black bg-green-50 px-4 py-1.5 rounded-full shadow-sm">ACTIVE</span></div>
+          <div className="p-6 flex justify-between items-center"><div className="flex items-center gap-4 text-gray-600 font-bold"><Icons.Settings size={20} /> เวอร์ชันระบบ</div><span className="text-gray-400 text-xs font-black uppercase tracking-tight">v3.7.2</span></div>
+        </div>
+        <button onClick={() => { if (typeof google !== 'undefined') google.script.run.withSuccessHandler(() => { }).doLogout(user.username); localStorage.removeItem('money_tracker_user'); setUser(null); }} className="w-full flex items-center justify-center gap-3 text-red-500 font-black bg-white border-2 border-red-50 p-5 rounded-2xl hover:bg-red-50 shadow-md active:scale-95 transition-all"><Icons.LogOut size={24} /> ออกจากระบบ</button>
+      </div>
+    );
+
+    if (!user && loading) return <div className="min-h-screen flex items-center justify-center bg-white w-full mx-auto"><div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-2xl animate-spin shadow-lg"></div></div>;
+    if (!user) return <ScreenAuth onLogin={setUser} />;
+
+    return (
+      <div className="max-w-md mx-auto bg-white min-h-screen relative shadow-2xl flex flex-col overflow-hidden w-full">
+        {notification && <div className={`fixed top-6 left-1/2 transform -translate-x-1/2 px-8 py-3.5 rounded-2xl shadow-2xl text-white text-xs font-black z-[60] tracking-wider ${notification.type === 'error' ? 'bg-red-500' : 'bg-gray-900 animate-bounce'}`}>{notification.msg}</div>}
+        <ConfirmModal isOpen={confirmDialog.isOpen} title={confirmDialog.title} message={confirmDialog.message} onConfirm={confirmDialog.onConfirm} onCancel={closeConfirm} />
+        {showCategoryManager && <CategoryManager onClose={() => setShowCategoryManager(false)} />}
+        <div className="flex-1 overflow-y-auto hide-scroll w-full">
+          {activeTab === 'dashboard' && <ScreenDashboard />}
+          {activeTab === 'history' && <ScreenHistory />}
+          {activeTab === 'add' && <ScreenAdd />}
+          {activeTab === 'settings' && <ScreenSettings />}
+          {activeTab === 'me' && <ScreenMe />}
+        </div>
+        <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur-xl border-t border-gray-100 pb-safe pt-4 px-2 z-40 shadow-[0_-10px_40px_-20px_rgba(0,0,0,0.1)]">
+          <div className="flex justify-around items-center text-[10px] font-black uppercase tracking-tighter w-full">
+            <button onClick={() => { setEditTx(null); setActiveTab('dashboard'); }} className={`flex flex-col items-center gap-1.5 w-14 transition-all ${activeTab === 'dashboard' ? 'text-blue-600 scale-110' : 'text-gray-300'}`}><Icons.PieChart size={26} /><span>สรุป</span></button>
+            <button onClick={() => { setEditTx(null); setActiveTab('history'); }} className={`flex flex-col items-center gap-1.5 w-14 transition-all ${activeTab === 'history' ? 'text-blue-600 scale-110' : 'text-gray-300'}`}><Icons.Calendar size={26} /><span>ประวัติ</span></button>
+            <div className="relative -top-8"><button onClick={() => { setEditTx(null); setActiveTab('add'); }} className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg border-4 border-white nav-add-glow active:scale-90 transition-all"><Icons.PlusCircle size={30} /></button></div>
+            <button onClick={() => { setEditTx(null); setActiveTab('settings'); }} className={`flex flex-col items-center gap-1.5 w-14 transition-all ${activeTab === 'settings' ? 'text-blue-600 scale-110' : 'text-gray-400'}`}><Icons.Settings size={26} /><span>ตั้งค่า</span></button>
+            <button onClick={() => { setEditTx(null); setActiveTab('me'); }} className={`flex flex-col items-center gap-1.5 w-14 transition-all ${activeTab === 'me' ? 'text-blue-600 scale-110' : 'text-gray-300'}`}><Icons.User size={26} /><span>ฉัน</span></button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<MoneyTrackerApp />);
+</script>
