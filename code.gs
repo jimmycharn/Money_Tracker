@@ -250,7 +250,7 @@ function getInitialData(username) {
     return rows.filter(r => String(r[userIndex]) === String(username)).map(r => {
       let obj = {};
       headers.forEach((h, i) => {
-        let key = String(h).toLowerCase().trim().replace('categoryid','categoryId');
+        let key = String(h).toLowerCase().trim().replace('categoryid','categoryId').replace('walletid','walletId');
         let val = r[i];
         if (val instanceof Date) val = Utilities.formatDate(val, Session.getScriptTimeZone(), "yyyy-MM-dd");
         obj[key] = (val === undefined) ? "" : val;
@@ -317,11 +317,30 @@ function editTransaction(tx, username) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(SHEET_TRANSACTIONS);
   const data = sheet.getDataRange().getValues();
-  const idIdx = findColumnIndex(data[0], 'ID');
-  const uIdx = findColumnIndex(data[0], 'Username');
+  const headers = data[0];
+  const idIdx = findColumnIndex(headers, 'ID');
+  const uIdx = findColumnIndex(headers, 'Username');
+  
+  const dateIdx = findColumnIndex(headers, 'Date');
+  const typeIdx = findColumnIndex(headers, 'Type');
+  const catIdx = findColumnIndex(headers, 'CategoryID');
+  const amountIdx = findColumnIndex(headers, 'Amount');
+  const noteIdx = findColumnIndex(headers, 'Note');
+  const tsIdx = findColumnIndex(headers, 'Timestamp');
+  const walletIdx = findColumnIndex(headers, 'WalletID');
+
   for(let i=1; i<data.length; i++) {
-    if(String(data[i][idIdx]) == String(tx.id) && String(data[i][uIdx]) == String(username)) { 
-       sheet.getRange(i+1, 1, 1, 9).setValues([[tx.id, tx.date, tx.type, tx.categoryId, tx.amount, tx.note, new Date(), username, tx.walletId]]);
+    if(String(data[i][idIdx]) == String(tx.id) && String(data[i][uIdx]) == String(username)) {
+       const row = data[i];
+       if (dateIdx !== -1) row[dateIdx] = tx.date;
+       if (typeIdx !== -1) row[typeIdx] = tx.type;
+       if (catIdx !== -1) row[catIdx] = tx.categoryId;
+       if (amountIdx !== -1) row[amountIdx] = tx.amount;
+       if (noteIdx !== -1) row[noteIdx] = tx.note;
+       if (tsIdx !== -1) row[tsIdx] = new Date();
+       if (walletIdx !== -1) row[walletIdx] = tx.walletId;
+       
+       sheet.getRange(i+1, 1, 1, headers.length).setValues([row]);
        return { success: true };
     }
   }
@@ -333,8 +352,9 @@ function deleteTransaction(id, username) {
   const sheet = ss.getSheetByName(SHEET_TRANSACTIONS);
   const data = sheet.getDataRange().getValues();
   const idIdx = findColumnIndex(data[0], 'ID');
+  const uIdx = findColumnIndex(data[0], 'Username');
   for(let i=1; i<data.length; i++) {
-    if(String(data[i][idIdx]) == String(id)) {
+    if(String(data[i][idIdx]) == String(id) && String(data[i][uIdx]) == String(username)) {
        sheet.deleteRow(i+1);
        return { success: true };
     }
