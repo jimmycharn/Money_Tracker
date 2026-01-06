@@ -32,23 +32,23 @@
   const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, type = 'danger' }) => {
     if (!isOpen) return null;
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm animate-fade-in">
-        <div className="bg-white w-full max-sm rounded-[2.5rem] p-8 shadow-2xl animate-scale-in text-center">
-          <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${type === 'danger' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-fade-in">
+        <div className="glass-dark w-full max-sm rounded-[2.5rem] p-8 shadow-2xl animate-scale-in text-center border border-white/10">
+          <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${type === 'danger' ? 'bg-red-500/10 text-red-500' : 'bg-gold-primary/10 text-gold-primary'}`}>
             <Icons.AlertCircle size={40} />
           </div>
-          <h3 className="text-xl font-black text-gray-800 mb-2">{title}</h3>
-          <p className="text-gray-500 text-sm mb-8 leading-relaxed">{message}</p>
+          <h3 className="text-xl font-black text-white mb-2">{title}</h3>
+          <p className="text-gray-400 text-sm mb-8 leading-relaxed">{message}</p>
           <div className="flex gap-3">
-            <button onClick={onCancel} className="flex-1 py-4 bg-gray-50 text-gray-500 font-bold rounded-2xl active:scale-95 transition-all">ยกเลิก</button>
-            <button onClick={onConfirm} className={`flex-1 py-4 text-white font-bold rounded-2xl active:scale-95 transition-all shadow-lg ${type === 'danger' ? 'bg-red-500 shadow-red-100' : 'bg-blue-600 shadow-blue-100'}`}>ยืนยัน</button>
+            <button onClick={onCancel} className="flex-1 py-4 bg-white/5 text-gray-400 font-bold rounded-2xl active:scale-95 transition-all border border-white/5">ยกเลิก</button>
+            <button onClick={onConfirm} className={`flex-1 py-4 text-black font-bold rounded-2xl active:scale-95 transition-all shadow-lg ${type === 'danger' ? 'bg-red-500 shadow-red-900/20' : 'gold-bg shadow-gold-900/20'}`}>ยืนยัน</button>
           </div>
         </div>
       </div>
     );
   };
 
-  const TrendChart = ({ data, color = '#3b82f6' }) => {
+  const TrendChart = ({ data, color = '#D4AF37' }) => {
     if (!data || data.length === 0) return null;
     const max = Math.max(...data.map(d => d.value), 100);
     const width = 300; const height = 100; const padding = 10;
@@ -60,13 +60,13 @@
     const pathData = points.length > 0 ? `M ${points[0].x} ${points[0].y} ` + points.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ') : '';
     const areaData = pathData + ` L ${points[points.length - 1].x} ${height} L ${points[0].x} ${height} Z`;
     return (
-      <div className="w-full h-32 mt-4 bg-white/50 rounded-3xl p-4 border border-white/50 shadow-inner overflow-hidden">
+      <div className="w-full h-32 mt-4 glass rounded-3xl p-4 border border-white/5 overflow-hidden">
         <div className="flex justify-between items-center mb-2">
-          <div className="flex items-center gap-1.5 text-[10px] font-black text-blue-600 uppercase tracking-widest"><Icons.TrendingUp size={14} /> แนวโน้มการใช้จ่าย</div>
-          <div className="text-[10px] font-bold text-gray-400">30 วันล่าสุด</div>
+          <div className="flex items-center gap-1.5 text-[10px] font-black text-gold-primary uppercase tracking-widest"><Icons.TrendingUp size={14} /> แนวโน้มการใช้จ่าย</div>
+          <div className="text-[10px] font-bold text-gray-500">30 วันล่าสุด</div>
         </div>
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
-          <defs><linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity="0.3" /><stop offset="100%" stopColor={color} stopOpacity="0" /></linearGradient></defs>
+          <defs><linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity="0.2" /><stop offset="100%" stopColor={color} stopOpacity="0" /></linearGradient></defs>
           <path d={areaData} fill="url(#trendGradient)" className="trend-line" />
           <path d={pathData} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="trend-line" />
           {points.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="3" fill="white" stroke={color} strokeWidth="2" className="trend-dot" />)}
@@ -81,7 +81,7 @@
     return (
       <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="transform -rotate-90">
-          <circle cx={size / 2} cy={size / 2} r={radius} fill="transparent" stroke="#f1f5f9" strokeWidth={strokeWidth} />
+          <circle cx={size / 2} cy={size / 2} r={radius} fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth={strokeWidth} />
           {data.map((item, i) => {
             const percentage = (item.value / total) * 100;
             const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
@@ -91,8 +91,8 @@
           })}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <div className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">ยอดรวม</div>
-          <div className="text-lg font-black text-gray-800 leading-none">{formatCurrency(total).replace('฿', '')}</div>
+          <div className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">ยอดรวม</div>
+          <div className="text-lg font-black text-white leading-none">{formatCurrency(total).replace('฿', '')}</div>
         </div>
       </div>
     );
@@ -104,19 +104,16 @@
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
-    const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const otpRefs = useRef([]);
 
     const handleSubmit = (e) => {
       e.preventDefault(); setLoading(true); setError('');
       const handler = (res) => {
         setLoading(false);
         if (res.success) {
-          if (mode === 'login' || mode === 'signup') { localStorage.setItem('money_tracker_user', JSON.stringify(res.user)); onLogin(res.user); }
-          else if (mode === 'forgot') setMode('otp');
-          else if (mode === 'reset') setMode('login');
+          localStorage.setItem('money_tracker_user', JSON.stringify(res.user));
+          onLogin(res.user);
         } else setError(res.message);
       };
       if (typeof google !== 'undefined') {
@@ -126,20 +123,38 @@
     };
 
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-500 to-indigo-600">
-        <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-sm mx-auto animate-scale-in">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600"><Icons.PieChart size={32} /></div>
-            <h1 className="text-2xl font-bold text-gray-800">Money Tracker</h1>
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#0a0a0a]">
+        <div className="glass-dark p-8 rounded-[2.5rem] shadow-2xl w-full max-sm mx-auto animate-scale-in border border-white/10">
+          <div className="text-center mb-10">
+            <div className="w-20 h-20 gold-bg rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-gold-900/20 text-black">
+              <Icons.PieChart size={40} />
+            </div>
+            <h1 className="text-3xl font-black gold-text tracking-tight">Money Tracker</h1>
+            <p className="text-gray-500 text-sm mt-2 font-medium">จัดการการเงินอย่างมีระดับ</p>
           </div>
-          {error && <div className="mb-4 p-3 bg-red-50 text-red-600 text-xs rounded-xl text-center">{error}</div>}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === 'signup' && <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl" placeholder="ชื่อเล่น" required />}
-            <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl" placeholder="Username" required />
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 bg-gray-50 border rounded-xl" placeholder="Password" required />
-            <button disabled={loading} type="submit" className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg">{loading ? 'กำลังโหลด...' : 'ตกลง'}</button>
+          {error && <div className="mb-6 p-4 bg-red-500/10 text-red-500 text-xs rounded-2xl text-center border border-red-500/20 font-bold">{error}</div>}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {mode === 'signup' && (
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"><Icons.User size={20} /></div>
+                <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-gold-primary/50 transition-all font-bold" placeholder="ชื่อเล่น" required />
+              </div>
+            )}
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"><Icons.Mail size={20} /></div>
+              <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-gold-primary/50 transition-all font-bold" placeholder="Username" required />
+            </div>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"><Icons.Lock size={20} /></div>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-gold-primary/50 transition-all font-bold" placeholder="Password" required />
+            </div>
+            <button disabled={loading} type="submit" className="w-full py-4 gold-bg text-black font-black rounded-2xl shadow-xl shadow-gold-900/20 active:scale-95 transition-all mt-4">
+              {loading ? 'กำลังเข้าสู่ระบบ...' : (mode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก')}
+            </button>
           </form>
-          <button onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} className="w-full mt-4 text-sm text-blue-600 font-bold">{mode === 'login' ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}</button>
+          <button onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} className="w-full mt-8 text-sm text-gray-400 font-bold hover:text-gold-primary transition-colors">
+            {mode === 'login' ? 'ยังไม่มีบัญชี? สมัครสมาชิก' : 'มีบัญชีอยู่แล้ว? เข้าสู่ระบบ'}
+          </button>
         </div>
       </div>
     );
@@ -177,11 +192,11 @@
     }).sort((a, b) => b.value - a.value);
 
     return (
-      <div className="pb-24 pt-6 px-4 min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto w-full">
-        <div className="flex items-center mb-6 overflow-x-auto gap-2 hide-scroll pb-2">
+      <div className="pb-32 pt-6 px-4 min-h-screen bg-[#0a0a0a] flex flex-col max-w-md mx-auto w-full">
+        <div className="flex items-center mb-8 overflow-x-auto gap-3 hide-scroll pb-2">
           <button
             onClick={() => setActiveWalletId('all')}
-            className={`px-6 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all shadow-sm border ${activeWalletId === 'all' ? 'bg-blue-600 text-white border-blue-600 shadow-blue-100' : 'bg-white text-gray-500 border-gray-100'}`}
+            className={`px-6 py-3 rounded-2xl font-black text-xs whitespace-nowrap transition-all border ${activeWalletId === 'all' ? 'gold-bg text-black border-gold-primary shadow-lg shadow-gold-900/20' : 'bg-white/5 text-gray-500 border-white/5'}`}
           >
             ทั้งหมด
           </button>
@@ -189,42 +204,51 @@
             <button
               key={w.id}
               onClick={() => setActiveWalletId(w.id)}
-              className={`px-6 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all shadow-sm border ${activeWalletId === w.id ? 'bg-blue-600 text-white border-blue-600 shadow-blue-100' : 'bg-white text-gray-500 border-gray-100'}`}
+              className={`px-6 py-3 rounded-2xl font-black text-xs whitespace-nowrap transition-all border ${activeWalletId === w.id ? 'gold-bg text-black border-gold-primary shadow-lg shadow-gold-900/20' : 'bg-white/5 text-gray-500 border-white/5'}`}
             >
               {w.name}
             </button>
           ))}
         </div>
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-black text-gray-800">สรุปข้อมูล</h2>
-          <select value={selMonth.value} onChange={e => setSelMonth(monthOptions[e.target.value])} className="bg-white border-none rounded-2xl px-4 py-2 text-sm font-bold shadow-sm outline-none">
-            {monthOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-          </select>
+          <h2 className="text-2xl font-black text-white tracking-tight">สรุปข้อมูล</h2>
+          <div className="relative">
+            <select value={selMonth.value} onChange={e => setSelMonth(monthOptions[e.target.value])} className="bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-xs font-bold text-gray-300 outline-none appearance-none pr-8">
+              {monthOptions.map(opt => <option key={opt.value} value={opt.value} className="bg-[#1a1a1a]">{opt.label}</option>)}
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">▼</div>
+          </div>
         </div>
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 rounded-[2rem] shadow-xl mb-6 text-white text-center">
-          <div className="text-xs font-extrabold uppercase opacity-80 mb-1">เงินเหลือเก็บสุทธิ</div>
-          <div className="text-4xl font-black">{formatCurrency(totalIncAll - totalExpAll)}</div>
-          <TrendChart data={trendData} color="#ffffff" />
+        <div className="glass-dark p-8 rounded-[2.5rem] shadow-2xl mb-8 text-center border border-white/10 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 gold-bg opacity-50"></div>
+          <div className="text-[10px] font-black gold-text uppercase tracking-[0.2em] mb-2 opacity-80">เงินเหลือเก็บสุทธิ</div>
+          <div className="text-5xl font-black text-white tracking-tighter mb-4">{formatCurrency(totalIncAll - totalExpAll).replace('฿', '')}<span className="text-lg gold-text ml-1">฿</span></div>
+          <TrendChart data={trendData} color="#D4AF37" />
         </div>
         <div className="grid grid-cols-2 gap-4 mb-8">
-          <div onClick={() => setDashboardTab('expense')} className={`p-4 rounded-3xl border-2 transition-all ${dashboardTab === 'expense' ? 'bg-pink-50 border-pink-200 scale-105' : 'bg-white border-transparent opacity-70'}`}>
-            <div className="text-xs text-gray-400 font-extrabold mb-1">รายจ่าย</div>
-            <div className="text-xl font-bold text-pink-600">{formatCurrency(totalExpAll)}</div>
-            <div className="text-[10px] text-pink-400 font-bold mt-1">เฉลี่ย {formatCurrency(avgExp)}/วัน</div>
+          <div onClick={() => setDashboardTab('expense')} className={`p-5 rounded-[2rem] border transition-all cursor-pointer ${dashboardTab === 'expense' ? 'bg-white/5 border-gold-primary/30 scale-[1.02]' : 'bg-white/5 border-transparent opacity-40'}`}>
+            <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">รายจ่าย</div>
+            <div className="text-2xl font-black text-white">{formatCurrency(totalExpAll).replace('฿', '')}</div>
+            <div className="text-[10px] text-gold-primary font-bold mt-1 opacity-80">เฉลี่ย {formatCurrency(avgExp)}/วัน</div>
           </div>
-          <div onClick={() => setDashboardTab('income')} className={`p-4 rounded-3xl border-2 transition-all ${dashboardTab === 'income' ? 'bg-green-50 border-green-200 scale-105' : 'bg-white border-transparent opacity-70'}`}>
-            <div className="text-xs text-gray-400 font-extrabold mb-1">รายรับ</div>
-            <div className="text-xl font-bold text-green-600">{formatCurrency(totalIncAll)}</div>
-            <div className="text-[10px] text-green-400 font-bold mt-1">เฉลี่ย {formatCurrency(avgInc)}/วัน</div>
+          <div onClick={() => setDashboardTab('income')} className={`p-5 rounded-[2rem] border transition-all cursor-pointer ${dashboardTab === 'income' ? 'bg-white/5 border-gold-primary/30 scale-[1.02]' : 'bg-white/5 border-transparent opacity-40'}`}>
+            <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">รายรับ</div>
+            <div className="text-2xl font-black text-white">{formatCurrency(totalIncAll).replace('฿', '')}</div>
+            <div className="text-[10px] text-gold-primary font-bold mt-1 opacity-80">เฉลี่ย {formatCurrency(avgInc)}/วัน</div>
           </div>
         </div>
-        <div className="bg-white rounded-[2.5rem] p-8 shadow-sm flex-1 flex flex-col items-center">
-          <div className="mb-8"><DonutChart data={chartData} total={totalDisplay} /></div>
-          <div className="space-y-5 w-full">
+        <div className="glass-dark rounded-[2.5rem] p-8 shadow-2xl flex-1 flex flex-col items-center border border-white/10">
+          <div className="mb-10"><DonutChart data={chartData} total={totalDisplay} /></div>
+          <div className="space-y-6 w-full">
             {chartData.map(cat => (
-              <div key={cat.id}>
-                <div className="flex justify-between text-sm mb-1 font-bold"><span className="text-gray-700">{cat.name}</span><span className="text-gray-900">{formatCurrency(cat.value)}</span></div>
-                <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${(cat.value / totalDisplay) * 100}%`, backgroundColor: cat.color }}></div></div>
+              <div key={cat.id} className="group">
+                <div className="flex justify-between text-xs mb-2 font-bold px-1">
+                  <span className="text-gray-400 group-hover:text-white transition-colors">{cat.name}</span>
+                  <span className="text-white">{formatCurrency(cat.value)}</span>
+                </div>
+                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${(cat.value / totalDisplay) * 100}%`, backgroundColor: cat.color }}></div>
+                </div>
               </div>
             ))}
           </div>
@@ -289,43 +313,54 @@
     };
 
     return (
-      <div className={`min-h-screen ${type === 'expense' ? 'bg-pink-50' : 'bg-green-50'} flex flex-col max-w-md mx-auto w-full`}>
-        <div className="p-4 flex justify-between items-center px-6">
-          {editTx ? <button onClick={handleDelete} className="text-red-500"><Icons.Trash2 /></button> : <div />}
-          <h2 className="text-lg font-bold">{editTx ? 'แก้ไขรายการ' : 'รายการใหม่'}</h2>
-          <button onClick={() => { setEditTx(null); setActiveTab('history'); }}><Icons.X /></button>
+      <div className={`min-h-screen ${type === 'expense' ? 'bg-[#0a0a0a]' : 'bg-[#0a0a0a]'} flex flex-col max-w-md mx-auto w-full`}>
+        <div className="p-6 flex justify-between items-center px-8">
+          {editTx ? <button onClick={handleDelete} className="text-red-500 hover:text-red-400 transition-colors"><Icons.Trash2 /></button> : <div />}
+          <h2 className="text-xl font-black text-white tracking-tight">{editTx ? 'แก้ไขรายการ' : 'รายการใหม่'}</h2>
+          <button onClick={() => { setEditTx(null); setActiveTab('history'); }} className="text-gray-500 hover:text-white transition-colors"><Icons.X /></button>
         </div>
-        <div className="px-6 mb-4">
-          <div className="bg-white/50 rounded-2xl p-3 flex gap-2">
-            <input value={aiText} onChange={e => setAiText(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleAI()} className="flex-1 bg-transparent outline-none text-sm font-bold" placeholder="พิมพ์บอก AI เช่น 'กินข้าว 50 บาท'..." />
-            <button onClick={handleAI} disabled={aiLoading} className="p-2 bg-blue-600 text-white rounded-xl shadow-lg active:scale-95 transition-all">{aiLoading ? '...' : <Icons.Sparkles size={18} />}</button>
+        <div className="px-8 mb-6">
+          <div className="glass-dark rounded-2xl p-3 flex gap-3 border border-white/10 shadow-lg">
+            <div className="p-2 text-gold-primary"><Icons.Sparkles size={20} /></div>
+            <input value={aiText} onChange={e => setAiText(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleAI()} className="flex-1 bg-transparent outline-none text-sm font-bold text-white placeholder:text-gray-600" placeholder="พิมพ์บอก AI เช่น 'กินข้าว 50 บาท'..." />
+            <button onClick={handleAI} disabled={aiLoading} className="px-4 py-2 gold-bg text-black rounded-xl font-black text-xs active:scale-95 transition-all shadow-lg shadow-gold-900/20">{aiLoading ? '...' : 'วิเคราะห์'}</button>
           </div>
         </div>
-        <div className="flex flex-col items-center py-4">
-          <div className="flex gap-2 mb-4 bg-white/50 p-1 rounded-full">
-            <button onClick={() => setType('expense')} className={`px-6 py-2 rounded-full font-bold ${type === 'expense' ? 'bg-white text-pink-600' : 'text-gray-500'}`}>จ่าย</button>
-            <button onClick={() => setType('income')} className={`px-6 py-2 rounded-full font-bold ${type === 'income' ? 'bg-white text-green-600' : 'text-gray-500'}`}>รับ</button>
+        <div className="flex flex-col items-center py-8">
+          <div className="flex gap-2 mb-8 bg-white/5 p-1.5 rounded-full border border-white/10">
+            <button onClick={() => setType('expense')} className={`px-8 py-2.5 rounded-full font-black text-xs transition-all ${type === 'expense' ? 'gold-bg text-black shadow-lg shadow-gold-900/20' : 'text-gray-500'}`}>จ่าย</button>
+            <button onClick={() => setType('income')} className={`px-8 py-2.5 rounded-full font-black text-xs transition-all ${type === 'income' ? 'gold-bg text-black shadow-lg shadow-gold-900/20' : 'text-gray-500'}`}>รับ</button>
           </div>
-          <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="amount-input text-6xl font-bold bg-transparent text-center outline-none" placeholder="0" />
-          <div className="flex gap-2 mt-2">
-            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="bg-white/60 px-4 py-2 rounded-full text-sm font-bold outline-none" />
-            <select value={walletId} onChange={e => setWalletId(e.target.value)} className="bg-white/60 px-4 py-2 rounded-full text-sm font-bold outline-none">
-              {wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-            </select>
+          <div className="relative">
+            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="amount-input text-7xl font-black bg-transparent text-center outline-none text-white tracking-tighter" placeholder="0" />
+            <div className="absolute -right-8 top-1/2 -translate-y-1/2 text-2xl font-black gold-text">฿</div>
+          </div>
+          <div className="flex gap-3 mt-8">
+            <div className="relative">
+              <input type="date" value={date} onChange={e => setDate(e.target.value)} className="bg-white/5 border border-white/10 px-5 py-2.5 rounded-2xl text-xs font-bold text-gray-300 outline-none focus:border-gold-primary/30 transition-all" />
+            </div>
+            <div className="relative">
+              <select value={walletId} onChange={e => setWalletId(e.target.value)} className="bg-white/5 border border-white/10 px-5 py-2.5 rounded-2xl text-xs font-bold text-gray-300 outline-none focus:border-gold-primary/30 transition-all appearance-none pr-10">
+                {wallets.map(w => <option key={w.id} value={w.id} className="bg-[#1a1a1a]">{w.name}</option>)}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600 text-[10px]">▼</div>
+            </div>
           </div>
         </div>
-        <div className="bg-white flex-1 rounded-t-[2.5rem] p-6 pb-32 shadow-2xl overflow-y-auto">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-4 gap-4">
+        <div className="glass-dark flex-1 rounded-t-[3rem] p-8 pb-32 shadow-2xl overflow-y-auto border-t border-white/10">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-4 gap-5">
               {categories.filter(c => c.type === type).map(cat => (
-                <button key={cat.id} type="button" onClick={() => setCategoryId(cat.id)} className={`p-2 rounded-2xl flex flex-col items-center ${categoryId === cat.id ? 'bg-gray-100 ring-2 ring-gray-300' : ''}`}>
-                  <div className="w-12 h-12 rounded-full text-white flex items-center justify-center font-bold" style={{ backgroundColor: cat.color }}>{cat.name[0]}</div>
-                  <span className="text-[10px] mt-1.5 font-bold text-gray-500 truncate w-full text-center">{cat.name}</span>
+                <button key={cat.id} type="button" onClick={() => setCategoryId(cat.id)} className={`p-2 rounded-2xl flex flex-col items-center transition-all ${categoryId === cat.id ? 'bg-white/10 ring-1 ring-gold-primary/50' : 'hover:bg-white/5'}`}>
+                  <div className="w-14 h-14 rounded-2xl text-white flex items-center justify-center font-black text-xl shadow-lg" style={{ backgroundColor: cat.color, boxShadow: `0 8px 20px -6px ${cat.color}66` }}>{cat.name[0]}</div>
+                  <span className="text-[10px] mt-2.5 font-black text-gray-500 truncate w-full text-center group-hover:text-gray-300">{cat.name}</span>
                 </button>
               ))}
             </div>
-            <input type="text" value={note} onChange={e => setNote(e.target.value)} className="w-full p-5 bg-gray-50 rounded-2xl outline-none font-medium" placeholder="บันทึก..." />
-            <button type="submit" className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg">บันทึก</button>
+            <div className="relative">
+              <input type="text" value={note} onChange={e => setNote(e.target.value)} className="w-full p-5 bg-white/5 border border-white/10 rounded-[1.5rem] outline-none font-bold text-white focus:border-gold-primary/30 transition-all" placeholder="บันทึกเพิ่มเติม..." />
+            </div>
+            <button type="submit" className="w-full py-5 gold-bg text-black rounded-[1.5rem] font-black text-lg shadow-2xl shadow-gold-900/30 active:scale-[0.98] transition-all">บันทึกรายการ</button>
           </form>
         </div>
       </div>
@@ -343,38 +378,53 @@
     const grouped = filtered.reduce((acc, t) => { if (!acc[t.date]) acc[t.date] = []; acc[t.date].push(t); return acc; }, {});
 
     return (
-      <div className="pb-24 pt-6 px-4 min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto w-full">
-        <div className="mb-6 space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">ประวัติ</h2>
-            <div className="text-sm font-black text-gray-800">ยอดรวม: {formatCurrency(totalFiltered)}</div>
+      <div className="pb-32 pt-6 px-4 min-h-screen bg-[#0a0a0a] flex flex-col max-w-md mx-auto w-full">
+        <div className="mb-8 space-y-6">
+          <div className="flex justify-between items-end">
+            <h2 className="text-3xl font-black text-white tracking-tight">ประวัติ</h2>
+            <div className="text-right">
+              <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">ยอดรวมช่วงนี้</div>
+              <div className={`text-lg font-black ${totalFiltered >= 0 ? 'gold-text' : 'text-red-500'}`}>{formatCurrency(totalFiltered)}</div>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-white p-2 rounded-xl text-xs font-bold shadow-sm" />
-            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-white p-2 rounded-xl text-xs font-bold shadow-sm" />
+          <div className="grid grid-cols-2 gap-3">
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-white/5 border border-white/10 p-3 rounded-2xl text-xs font-bold text-gray-300 outline-none focus:border-gold-primary/30 transition-all" />
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-white/5 border border-white/10 p-3 rounded-2xl text-xs font-bold text-gray-300 outline-none focus:border-gold-primary/30 transition-all" />
           </div>
-          <div className="flex gap-2 overflow-x-auto hide-scroll">
-            {['all', 'expense', 'income'].map(m => <button key={m} onClick={() => setFilterType(m)} className={`px-4 py-2 rounded-xl text-xs font-bold shadow-sm whitespace-nowrap ${filterType === m ? 'bg-gray-800 text-white' : 'bg-white text-gray-400'}`}>{m === 'all' ? 'ทั้งหมด' : (m === 'expense' ? 'จ่าย' : 'รับ')}</button>)}
-            <select value={filterCatId} onChange={e => setFilterCatId(e.target.value)} className="bg-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm outline-none">
-              <option value="all">ทุกหมวดหมู่</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+          <div className="flex gap-2 overflow-x-auto hide-scroll pb-2">
+            {['all', 'expense', 'income'].map(m => (
+              <button key={m} onClick={() => setFilterType(m)} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${filterType === m ? 'gold-bg text-black border-gold-primary shadow-lg shadow-gold-900/20' : 'bg-white/5 text-gray-500 border-white/5'}`}>
+                {m === 'all' ? 'ทั้งหมด' : (m === 'expense' ? 'จ่าย' : 'รับ')}
+              </button>
+            ))}
+            <div className="relative min-w-[120px]">
+              <select value={filterCatId} onChange={e => setFilterCatId(e.target.value)} className="w-full bg-white/5 border border-white/10 px-4 py-2.5 rounded-xl text-[10px] font-black text-gray-500 outline-none appearance-none pr-8">
+                <option value="all" className="bg-[#1a1a1a]">ทุกหมวดหมู่</option>
+                {categories.map(c => <option key={c.id} value={c.id} className="bg-[#1a1a1a]">{c.name}</option>)}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600">▼</div>
+            </div>
           </div>
         </div>
-        <div className="space-y-6">
+        <div className="space-y-8">
           {Object.keys(grouped).map(date => (
             <div key={date}>
-              <div className="text-[11px] font-extrabold text-gray-400 uppercase mb-2 px-2">{new Date(date).toLocaleDateString('th-TH', { dateStyle: 'medium' })}</div>
-              <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+              <div className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-4 px-2">{new Date(date).toLocaleDateString('th-TH', { dateStyle: 'long' })}</div>
+              <div className="glass-dark rounded-[2rem] border border-white/10 overflow-hidden shadow-xl">
                 {grouped[date].map(t => {
-                  const cat = categories.find(c => c.id === t.categoryId) || { name: 'อื่นๆ', color: '#ccc' };
+                  const cat = categories.find(c => c.id === t.categoryId) || { name: 'อื่นๆ', color: '#333' };
                   return (
-                    <div key={t.id} onClick={() => { setEditTx(t); setActiveTab('add'); }} className="p-4 flex justify-between items-center border-b border-gray-50 last:border-0 active:bg-gray-50">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl text-white flex items-center justify-center font-bold" style={{ backgroundColor: cat.color }}>{cat.name[0]}</div>
-                        <div><div className="font-bold text-gray-800">{cat.name}</div><div className="text-[10px] text-gray-400">{t.note}</div></div>
+                    <div key={t.id} onClick={() => { setEditTx(t); setActiveTab('add'); }} className="p-5 flex justify-between items-center border-b border-white/5 last:border-0 active:bg-white/5 transition-colors cursor-pointer group">
+                      <div className="flex items-center gap-5">
+                        <div className="w-12 h-12 rounded-2xl text-white flex items-center justify-center font-black text-lg shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: cat.color, boxShadow: `0 6px 15px -4px ${cat.color}66` }}>{cat.name[0]}</div>
+                        <div>
+                          <div className="font-black text-white text-sm mb-0.5">{cat.name}</div>
+                          <div className="text-[10px] text-gray-500 font-bold">{t.note || 'ไม่มีบันทึก'}</div>
+                        </div>
                       </div>
-                      <div className={`font-black ${t.type === 'income' ? 'text-green-600' : 'text-gray-800'}`}>{t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()}</div>
+                      <div className={`text-base font-black tracking-tight ${t.type === 'income' ? 'gold-text' : 'text-white'}`}>
+                        {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()}
+                      </div>
                     </div>
                   );
                 })}
@@ -385,14 +435,14 @@
       </div>
     );
   };
-
+  // PART 2 END
   const CategoryManager = ({ onClose, categories, setCategories, saveToBackend, requestConfirm }) => {
     const [tab, setTab] = useState('expense');
     const [editing, setEditing] = useState(null);
     const [tempName, setTempName] = useState('');
-    const [tempColor, setTempColor] = useState('#000000');
+    const [tempColor, setTempColor] = useState('#D4AF37');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const openEditor = (cat) => { setEditing(cat); setTempName(cat ? cat.name : ''); setTempColor(cat ? cat.color : '#000000'); setIsModalOpen(true); };
+    const openEditor = (cat) => { setEditing(cat); setTempName(cat ? cat.name : ''); setTempColor(cat ? cat.color : '#D4AF37'); setIsModalOpen(true); };
     const handleSave = () => {
       if (!tempName) return; let newCats = [...categories];
       if (editing) newCats = newCats.map(c => c.id === editing.id ? { ...c, name: tempName, color: tempColor } : c);
@@ -400,29 +450,56 @@
       setCategories(newCats); saveToBackend('categories', newCats); setIsModalOpen(false);
     };
     return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col max-w-md mx-auto w-full">
-        <div className="p-4 border-b flex justify-between items-center px-6"><button onClick={onClose}><Icons.X /></button><h2 className="font-bold">จัดการหมวดหมู่</h2><div className="w-6" /></div>
-        <div className="p-4 flex-1 overflow-y-auto bg-gray-50">
-          <div className="flex gap-2 mb-6 bg-white p-1 rounded-xl">
-            <button onClick={() => setTab('expense')} className={`flex-1 py-2 rounded-lg font-bold ${tab === 'expense' ? 'bg-pink-100 text-pink-700' : 'text-gray-400'}`}>รายจ่าย</button>
-            <button onClick={() => setTab('income')} className={`flex-1 py-2 rounded-lg font-bold ${tab === 'income' ? 'bg-green-100 text-green-700' : 'text-gray-400'}`}>รายรับ</button>
+      <div className="fixed inset-0 bg-[#0a0a0a] z-50 flex flex-col max-w-md mx-auto w-full animate-slide-up">
+        <div className="p-6 border-b border-white/10 flex justify-between items-center px-8">
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors"><Icons.X /></button>
+          <h2 className="text-xl font-black text-white tracking-tight">จัดการหมวดหมู่</h2>
+          <div className="w-6" />
+        </div>
+        <div className="p-6 flex-1 overflow-y-auto bg-[#0a0a0a]">
+          <div className="flex gap-2 mb-8 bg-white/5 p-1.5 rounded-2xl border border-white/10">
+            <button onClick={() => setTab('expense')} className={`flex-1 py-3 rounded-xl font-black text-xs transition-all ${tab === 'expense' ? 'gold-bg text-black shadow-lg shadow-gold-900/20' : 'text-gray-500'}`}>รายจ่าย</button>
+            <button onClick={() => setTab('income')} className={`flex-1 py-3 rounded-xl font-black text-xs transition-all ${tab === 'income' ? 'gold-bg text-black shadow-lg shadow-gold-900/20' : 'text-gray-500'}`}>รายรับ</button>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {categories.filter(c => c.type === tab).map(c => (
-              <div key={c.id} onClick={() => openEditor(c)} className="bg-white p-4 rounded-xl flex items-center justify-between shadow-sm active:scale-[0.98] transition-all">
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full" style={{ backgroundColor: c.color }}></div>
-                  <span className="font-bold">{c.name}</span>
+              <div key={c.id} onClick={() => openEditor(c)} className="glass-dark p-5 rounded-[1.5rem] flex items-center justify-between border border-white/10 hover:border-gold-primary/30 transition-all cursor-pointer group">
+                <div className="flex items-center gap-5">
+                  <div className="w-10 h-10 rounded-xl shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: c.color, boxShadow: `0 4px 12px -3px ${c.color}66` }}></div>
+                  <span className="font-black text-white text-sm">{c.name}</span>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); requestConfirm('ลบหมวดหมู่?', `ยืนยันลบหมวดหมู่ "${c.name}"?`, () => { const next = categories.filter(x => x.id !== c.id); setCategories(next); saveToBackend('delete_category', c.id); }); }} className="p-2 text-gray-300 hover:text-red-500 transition-colors">
+                <button onClick={(e) => { e.stopPropagation(); requestConfirm('ลบหมวดหมู่?', `ยืนยันลบหมวดหมู่ "${c.name}"?`, () => { const next = categories.filter(x => x.id !== c.id); setCategories(next); saveToBackend('delete_category', c.id); }); }} className="p-2 text-gray-600 hover:text-red-500 transition-colors">
                   <Icons.Trash2 size={18} />
                 </button>
               </div>
             ))}
           </div>
-          <button onClick={() => openEditor(null)} className="w-full mt-8 py-4 rounded-xl font-bold text-white bg-indigo-600">+ เพิ่มหมวดหมู่</button>
+          <button onClick={() => openEditor(null)} className="w-full mt-10 py-5 rounded-[1.5rem] font-black text-black gold-bg shadow-2xl shadow-gold-900/30 active:scale-[0.98] transition-all">+ เพิ่มหมวดหมู่ใหม่</button>
         </div>
-        {isModalOpen && <div className="fixed inset-0 z-[60] bg-black/50 flex items-end justify-center"><div className="bg-white w-full max-w-md rounded-t-[2rem] p-8 animate-slide-up"><h3 className="text-xl font-bold mb-6">ข้อมูลหมวดหมู่</h3><input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl mb-4 outline-none font-bold" placeholder="ชื่อหมวด" /><input type="color" value={tempColor} onChange={e => setTempColor(e.target.value)} className="w-full h-12 mb-6 cursor-pointer" /><button onClick={handleSave} className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold">บันทึก</button><button onClick={() => setIsModalOpen(false)} className="w-full py-4 text-gray-400 font-bold mt-2">ยกเลิก</button></div></div>}
+        {isModalOpen && (
+          <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end justify-center">
+            <div className="glass-dark w-full max-w-md rounded-t-[3rem] p-10 animate-slide-up border-t border-white/10 shadow-2xl">
+              <h3 className="text-2xl font-black text-white mb-8 tracking-tight">ข้อมูลหมวดหมู่</h3>
+              <div className="space-y-6">
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">ชื่อหมวดหมู่</label>
+                  <input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl outline-none font-black text-white focus:border-gold-primary/30 transition-all" placeholder="เช่น อาหาร, เดินทาง..." />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">สีประจำหมวด</label>
+                  <div className="flex gap-4 items-center">
+                    <input type="color" value={tempColor} onChange={e => setTempColor(e.target.value)} className="w-20 h-20 bg-transparent border-none cursor-pointer rounded-2xl overflow-hidden" />
+                    <div className="flex-1 text-xs font-bold text-gray-400">เลือกสีที่ช่วยให้คุณจดจำหมวดหมู่ได้ง่ายขึ้น</div>
+                  </div>
+                </div>
+                <div className="pt-4 space-y-3">
+                  <button onClick={handleSave} className="w-full py-5 gold-bg text-black rounded-2xl font-black text-lg shadow-xl shadow-gold-900/20">บันทึกข้อมูล</button>
+                  <button onClick={() => setIsModalOpen(false)} className="w-full py-4 text-gray-500 font-black text-sm hover:text-white transition-colors">ยกเลิก</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -431,9 +508,9 @@
     const [editing, setEditing] = useState(null);
     const [tempName, setTempName] = useState('');
     const [tempBalance, setTempBalance] = useState('');
-    const [tempColor, setTempColor] = useState('#3b82f6');
+    const [tempColor, setTempColor] = useState('#D4AF37');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const openEditor = (w) => { setEditing(w); setTempName(w ? w.name : ''); setTempBalance(w ? String(w.initialbalance || 0) : ''); setTempColor(w ? w.color : '#3b82f6'); setIsModalOpen(true); };
+    const openEditor = (w) => { setEditing(w); setTempName(w ? w.name : ''); setTempBalance(w ? String(w.initialbalance || 0) : ''); setTempColor(w ? w.color : '#D4AF37'); setIsModalOpen(true); };
     const handleSave = () => {
       if (!tempName) return; let newWallets = [...wallets];
       if (editing) newWallets = newWallets.map(w => w.id === editing.id ? { ...w, name: tempName, initialbalance: parseFloat(tempBalance) || 0, color: tempColor } : w);
@@ -441,28 +518,56 @@
       setWallets(newWallets); saveToBackend('wallets', newWallets); setIsModalOpen(false);
     };
     return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col max-w-md mx-auto w-full">
-        <div className="p-4 border-b flex justify-between items-center px-6"><button onClick={onClose}><Icons.X /></button><h2 className="font-bold">จัดการกระเป๋าเงิน</h2><div className="w-6" /></div>
-        <div className="p-4 flex-1 overflow-y-auto bg-gray-50">
-          <div className="space-y-2">
+      <div className="fixed inset-0 bg-[#0a0a0a] z-50 flex flex-col max-w-md mx-auto w-full animate-slide-up">
+        <div className="p-6 border-b border-white/10 flex justify-between items-center px-8">
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors"><Icons.X /></button>
+          <h2 className="text-xl font-black text-white tracking-tight">จัดการกระเป๋าเงิน</h2>
+          <div className="w-6" />
+        </div>
+        <div className="p-6 flex-1 overflow-y-auto bg-[#0a0a0a]">
+          <div className="space-y-3">
             {wallets.map(w => (
-              <div key={w.id} onClick={() => openEditor(w)} className="bg-white p-4 rounded-xl flex justify-between items-center shadow-sm active:scale-[0.98] transition-all">
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: w.color }}><Icons.Wallet size={16} /></div>
-                  <span className="font-bold">{w.name}</span>
+              <div key={w.id} onClick={() => openEditor(w)} className="glass-dark p-5 rounded-[1.5rem] flex justify-between items-center border border-white/10 hover:border-gold-primary/30 transition-all cursor-pointer group">
+                <div className="flex items-center gap-5">
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-black shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: w.color, boxShadow: `0 6px 15px -4px ${w.color}66` }}><Icons.Wallet size={24} /></div>
+                  <span className="font-black text-white text-sm">{w.name}</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-gray-400 font-bold">฿{(w.initialbalance || 0).toLocaleString()}</span>
-                  <button onClick={(e) => { e.stopPropagation(); requestConfirm('ลบกระเป๋าเงิน?', `ยืนยันลบกระเป๋าเงิน "${w.name}"?`, () => { const next = wallets.filter(x => x.id !== w.id); setWallets(next); saveToBackend('delete_wallet', w.id); }); }} className="p-2 text-gray-300 hover:text-red-500 transition-colors">
+                <div className="flex items-center gap-4">
+                  <span className="text-gold-primary font-black text-sm">฿{(w.initialbalance || 0).toLocaleString()}</span>
+                  <button onClick={(e) => { e.stopPropagation(); requestConfirm('ลบกระเป๋าเงิน?', `ยืนยันลบกระเป๋าเงิน "${w.name}"?`, () => { const next = wallets.filter(x => x.id !== w.id); setWallets(next); saveToBackend('delete_wallet', w.id); }); }} className="p-2 text-gray-600 hover:text-red-500 transition-colors">
                     <Icons.Trash2 size={18} />
                   </button>
                 </div>
               </div>
             ))}
           </div>
-          <button onClick={() => openEditor(null)} className="w-full mt-8 py-4 rounded-xl font-bold text-white bg-blue-600">+ เพิ่มกระเป๋าเงิน</button>
+          <button onClick={() => openEditor(null)} className="w-full mt-10 py-5 rounded-[1.5rem] font-black text-black gold-bg shadow-2xl shadow-gold-900/30 active:scale-[0.98] transition-all">+ เพิ่มกระเป๋าเงินใหม่</button>
         </div>
-        {isModalOpen && <div className="fixed inset-0 z-[60] bg-black/50 flex items-end justify-center"><div className="bg-white w-full max-w-md rounded-t-[2rem] p-8 animate-slide-up"><h3 className="text-xl font-bold mb-6">ข้อมูลกระเป๋าเงิน</h3><input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl mb-4 outline-none font-bold" placeholder="ชื่อกระเป๋า" /><input type="number" value={tempBalance} onChange={e => setTempBalance(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl mb-4 outline-none font-bold" placeholder="ยอดเงินเริ่มต้น" /><input type="color" value={tempColor} onChange={e => setTempColor(e.target.value)} className="w-full h-12 mb-6 cursor-pointer" /><button onClick={handleSave} className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold">บันทึก</button><button onClick={() => setIsModalOpen(false)} className="w-full py-4 text-gray-400 font-bold mt-2">ยกเลิก</button></div></div>}
+        {isModalOpen && (
+          <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end justify-center">
+            <div className="glass-dark w-full max-w-md rounded-t-[3rem] p-10 animate-slide-up border-t border-white/10 shadow-2xl">
+              <h3 className="text-2xl font-black text-white mb-8 tracking-tight">ข้อมูลกระเป๋าเงิน</h3>
+              <div className="space-y-6">
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">ชื่อกระเป๋าเงิน</label>
+                  <input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl outline-none font-black text-white focus:border-gold-primary/30 transition-all" placeholder="เช่น เงินสด, บัญชีหลัก..." />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">ยอดเงินเริ่มต้น</label>
+                  <input type="number" value={tempBalance} onChange={e => setTempBalance(e.target.value)} className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl outline-none font-black text-white focus:border-gold-primary/30 transition-all" placeholder="0.00" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">สีประจำกระเป๋า</label>
+                  <input type="color" value={tempColor} onChange={e => setTempColor(e.target.value)} className="w-full h-14 bg-transparent border-none cursor-pointer rounded-2xl overflow-hidden" />
+                </div>
+                <div className="pt-4 space-y-3">
+                  <button onClick={handleSave} className="w-full py-5 gold-bg text-black rounded-2xl font-black text-lg shadow-xl shadow-gold-900/20">บันทึกข้อมูล</button>
+                  <button onClick={() => setIsModalOpen(false)} className="w-full py-4 text-gray-500 font-black text-sm hover:text-white transition-colors">ยกเลิก</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -486,16 +591,27 @@
       }
     };
     return (
-      <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-6" onClick={onClose}>
-        <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
-          <h3 className="text-xl font-bold mb-6">โอนเงิน</h3>
-          <div className="space-y-4">
-            <select value={fromId} onChange={e => setFromId(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl outline-none font-bold">{wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select>
-            <div className="text-center text-gray-300">▼</div>
-            <select value={toId} onChange={e => setToId(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl outline-none font-bold">{wallets.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}</select>
-            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl outline-none font-bold" placeholder="จำนวนเงิน" />
-            <input type="text" value={note} onChange={e => setNote(e.target.value)} className="w-full p-4 bg-gray-50 rounded-xl outline-none font-bold" placeholder="บันทึก" />
-            <button onClick={handleTransfer} className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg">โอนเงิน</button>
+      <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6" onClick={onClose}>
+        <div className="glass-dark w-full max-w-sm rounded-[3rem] p-10 shadow-2xl border border-white/10 animate-scale-in" onClick={e => e.stopPropagation()}>
+          <h3 className="text-2xl font-black text-white mb-8 tracking-tight text-center">โอนเงิน</h3>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2">จากกระเป๋า</label>
+              <select value={fromId} onChange={e => setFromId(e.target.value)} className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl outline-none font-black text-white focus:border-gold-primary/30 transition-all appearance-none">{wallets.map(w => <option key={w.id} value={w.id} className="bg-[#1a1a1a]">{w.name}</option>)}</select>
+            </div>
+            <div className="flex justify-center py-1">
+              <div className="w-10 h-10 gold-bg rounded-full flex items-center justify-center text-black shadow-lg"><Icons.ChevronRight className="rotate-90" size={20} /></div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2">ไปยังกระเป๋า</label>
+              <select value={toId} onChange={e => setToId(e.target.value)} className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl outline-none font-black text-white focus:border-gold-primary/30 transition-all appearance-none">{wallets.map(w => <option key={w.id} value={w.id} className="bg-[#1a1a1a]">{w.name}</option>)}</select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2">จำนวนเงิน</label>
+              <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl outline-none font-black text-white focus:border-gold-primary/30 transition-all text-center text-2xl" placeholder="0.00" />
+            </div>
+            <input type="text" value={note} onChange={e => setNote(e.target.value)} className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl outline-none font-bold text-white focus:border-gold-primary/30 transition-all" placeholder="บันทึกช่วยจำ..." />
+            <button onClick={handleTransfer} className="w-full py-5 gold-bg text-black rounded-2xl font-black text-lg shadow-xl shadow-gold-900/20 active:scale-95 transition-all mt-4">ยืนยันการโอน</button>
           </div>
         </div>
       </div>
@@ -554,44 +670,82 @@
       }
     };
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]"><div className="w-12 h-12 border-4 border-gold-primary border-t-transparent rounded-full animate-spin"></div></div>;
     if (!user) return <ScreenAuth onLogin={setUser} />;
 
     return (
-      <div className="bg-gray-50 min-h-screen">
-        {activeTab === 'dashboard' && <ScreenDashboard transactions={transactions} categories={categories} wallets={wallets} activeWalletId={activeWalletId} setActiveWalletId={setActiveWalletId} />}
-        {activeTab === 'add' && <ScreenAdd editTx={editTx} setEditTx={setEditTx} setActiveTab={setActiveTab} categories={categories} wallets={wallets} setTransactions={setTransactions} saveToBackend={saveToBackend} user={user} showNotification={showNotification} requestConfirm={requestConfirm} />}
-        {activeTab === 'history' && <ScreenHistory transactions={transactions} categories={categories} activeWalletId={activeWalletId} setEditTx={setEditTx} setActiveTab={setActiveTab} />}
-        {activeTab === 'settings' && (
-          <div className="p-5 pt-8 bg-white min-h-screen">
-            <h2 className="text-2xl font-bold mb-6">ตั้งค่า</h2>
-            <div className="space-y-4">
-              <div onClick={() => setShowCategoryManager(true)} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl cursor-pointer"><div className="flex items-center gap-3"><Icons.List className="text-blue-600" /><span>จัดการหมวดหมู่</span></div><Icons.ChevronRight /></div>
-              <div onClick={() => setShowWalletManager(true)} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl cursor-pointer"><div className="flex items-center gap-3"><Icons.Wallet className="text-indigo-600" /><span>จัดการกระเป๋าเงิน</span></div><Icons.ChevronRight /></div>
-              <div onClick={() => setShowTransferModal(true)} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl cursor-pointer"><div className="flex items-center gap-3"><Icons.TrendingUp className="text-green-600" /><span>โอนเงิน</span></div><Icons.ChevronRight /></div>
+      <div className="bg-[#0a0a0a] min-h-screen text-white font-sans selection:bg-gold-primary/30">
+        <div className="max-w-md mx-auto relative min-h-screen">
+          {activeTab === 'dashboard' && <ScreenDashboard transactions={transactions} categories={categories} wallets={wallets} activeWalletId={activeWalletId} setActiveWalletId={setActiveWalletId} />}
+          {activeTab === 'add' && <ScreenAdd editTx={editTx} setEditTx={setEditTx} setActiveTab={setActiveTab} categories={categories} wallets={wallets} setTransactions={setTransactions} saveToBackend={saveToBackend} user={user} showNotification={showNotification} requestConfirm={requestConfirm} />}
+          {activeTab === 'history' && <ScreenHistory transactions={transactions} categories={categories} activeWalletId={activeWalletId} setEditTx={setEditTx} setActiveTab={setActiveTab} />}
+          {activeTab === 'settings' && (
+            <div className="p-8 pt-12 bg-[#0a0a0a] min-h-screen">
+              <h2 className="text-3xl font-black mb-10 tracking-tight">ตั้งค่า</h2>
+              <div className="space-y-4">
+                <div onClick={() => setShowCategoryManager(true)} className="flex items-center justify-between p-6 glass-dark rounded-[1.5rem] cursor-pointer border border-white/5 hover:border-gold-primary/30 transition-all group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-gold-primary/10 flex items-center justify-center text-gold-primary group-hover:scale-110 transition-transform"><Icons.List size={24} /></div>
+                    <span className="font-black text-sm">จัดการหมวดหมู่</span>
+                  </div>
+                  <Icons.ChevronRight className="text-gray-600" />
+                </div>
+                <div onClick={() => setShowWalletManager(true)} className="flex items-center justify-between p-6 glass-dark rounded-[1.5rem] cursor-pointer border border-white/5 hover:border-gold-primary/30 transition-all group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-gold-primary/10 flex items-center justify-center text-gold-primary group-hover:scale-110 transition-transform"><Icons.Wallet size={24} /></div>
+                    <span className="font-black text-sm">จัดการกระเป๋าเงิน</span>
+                  </div>
+                  <Icons.ChevronRight className="text-gray-600" />
+                </div>
+                <div onClick={() => setShowTransferModal(true)} className="flex items-center justify-between p-6 glass-dark rounded-[1.5rem] cursor-pointer border border-white/5 hover:border-gold-primary/30 transition-all group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-gold-primary/10 flex items-center justify-center text-gold-primary group-hover:scale-110 transition-transform"><Icons.TrendingUp size={24} /></div>
+                    <span className="font-black text-sm">โอนเงินระหว่างกระเป๋า</span>
+                  </div>
+                  <Icons.ChevronRight className="text-gray-600" />
+                </div>
+              </div>
             </div>
-          </div>
-        )}
-        {activeTab === 'me' && (
-          <div className="p-8 pt-12 bg-white min-h-screen flex flex-col items-center">
-            <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4"><Icons.User size={48} /></div>
-            <h2 className="text-2xl font-black">{user?.name}</h2>
-            <p className="text-gray-400 mb-8">@{user?.username}</p>
-            <button onClick={() => { localStorage.removeItem('money_tracker_user'); setUser(null); }} className="w-full py-4 bg-red-50 text-red-500 rounded-2xl font-bold">ออกจากระบบ</button>
-          </div>
-        )}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t px-6 py-3 flex justify-between items-center z-50 max-w-md mx-auto">
-          <button onClick={() => setActiveTab('dashboard')} className={`p-2 ${activeTab === 'dashboard' ? 'text-blue-600' : 'text-gray-300'}`}><Icons.PieChart /></button>
-          <button onClick={() => setActiveTab('history')} className={`p-2 ${activeTab === 'history' ? 'text-blue-600' : 'text-gray-300'}`}><Icons.List /></button>
-          <button onClick={() => { setEditTx(null); setActiveTab('add'); }} className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg -mt-10 border-4 border-white"><Icons.PlusCircle size={32} /></button>
-          <button onClick={() => setActiveTab('settings')} className={`p-2 ${activeTab === 'settings' ? 'text-blue-600' : 'text-gray-300'}`}><Icons.Settings /></button>
-          <button onClick={() => setActiveTab('me')} className={`p-2 ${activeTab === 'me' ? 'text-blue-600' : 'text-gray-300'}`}><Icons.User /></button>
-        </nav>
-        {notification && <div className="fixed top-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl shadow-2xl z-[200] bg-gray-900 text-white font-bold">{notification.msg}</div>}
-        {showCategoryManager && <CategoryManager onClose={() => setShowCategoryManager(false)} categories={categories} setCategories={setCategories} saveToBackend={saveToBackend} requestConfirm={requestConfirm} />}
-        {showWalletManager && <WalletManager onClose={() => setShowWalletManager(false)} wallets={wallets} setWallets={setWallets} saveToBackend={saveToBackend} requestConfirm={requestConfirm} />}
-        {showTransferModal && <TransferModal onClose={() => setShowTransferModal(false)} wallets={wallets} setTransactions={setTransactions} user={user} showNotification={showNotification} toLocalDateString={toLocalDateString} generateId={generateId} />}
-        <ConfirmModal isOpen={confirmDialog.isOpen} title={confirmDialog.title} message={confirmDialog.message} onConfirm={() => { confirmDialog.onConfirm(); setConfirmDialog({ ...confirmDialog, isOpen: false }); }} onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} />
+          )}
+          {activeTab === 'me' && (
+            <div className="p-10 pt-20 bg-[#0a0a0a] min-h-screen flex flex-col items-center">
+              <div className="relative mb-8">
+                <div className="w-32 h-32 gold-bg rounded-[2.5rem] flex items-center justify-center text-black shadow-2xl shadow-gold-900/40 animate-pulse-slow">
+                  <Icons.User size={64} />
+                </div>
+                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-green-500 border-4 border-[#0a0a0a] rounded-full"></div>
+              </div>
+              <h2 className="text-3xl font-black text-white tracking-tight mb-1">{user?.name}</h2>
+              <p className="text-gold-primary font-bold text-sm mb-12 opacity-80">@{user?.username}</p>
+
+              <div className="w-full space-y-4">
+                <button onClick={() => { localStorage.removeItem('money_tracker_user'); setUser(null); }} className="w-full py-5 bg-white/5 text-red-500 rounded-[1.5rem] font-black text-lg border border-red-500/10 hover:bg-red-500/5 transition-all active:scale-95">ออกจากระบบ</button>
+              </div>
+            </div>
+          )}
+
+          <nav className="fixed bottom-6 left-4 right-4 glass-dark border border-white/10 px-6 py-4 flex justify-between items-center z-50 max-w-md mx-auto rounded-[2.5rem] shadow-2xl">
+            <button onClick={() => setActiveTab('dashboard')} className={`p-2 transition-all ${activeTab === 'dashboard' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.PieChart size={24} /></button>
+            <button onClick={() => setActiveTab('history')} className={`p-2 transition-all ${activeTab === 'history' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.List size={24} /></button>
+            <button onClick={() => { setEditTx(null); setActiveTab('add'); }} className="w-16 h-16 gold-bg rounded-[1.5rem] flex items-center justify-center text-black shadow-2xl shadow-gold-900/40 -mt-16 border-[6px] border-[#0a0a0a] active:scale-90 transition-all"><Icons.PlusCircle size={32} /></button>
+            <button onClick={() => setActiveTab('settings')} className={`p-2 transition-all ${activeTab === 'settings' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.Settings size={24} /></button>
+            <button onClick={() => setActiveTab('me')} className={`p-2 transition-all ${activeTab === 'me' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.User size={24} /></button>
+          </nav>
+
+          {notification && (
+            <div className="fixed top-10 left-1/2 -translate-x-1/2 px-8 py-4 rounded-2xl shadow-2xl z-[200] glass-dark border border-gold-primary/30 text-white font-black text-sm animate-slide-down">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full gold-bg animate-pulse"></div>
+                {notification.msg}
+              </div>
+            </div>
+          )}
+
+          {showCategoryManager && <CategoryManager onClose={() => setShowCategoryManager(false)} categories={categories} setCategories={setCategories} saveToBackend={saveToBackend} requestConfirm={requestConfirm} />}
+          {showWalletManager && <WalletManager onClose={() => setShowWalletManager(false)} wallets={wallets} setWallets={setWallets} saveToBackend={saveToBackend} requestConfirm={requestConfirm} />}
+          {showTransferModal && <TransferModal onClose={() => setShowTransferModal(false)} wallets={wallets} setTransactions={setTransactions} user={user} showNotification={showNotification} toLocalDateString={toLocalDateString} generateId={generateId} />}
+          <ConfirmModal isOpen={confirmDialog.isOpen} title={confirmDialog.title} message={confirmDialog.message} onConfirm={() => { confirmDialog.onConfirm(); setConfirmDialog({ ...confirmDialog, isOpen: false }); }} onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} />
+        </div>
       </div>
     );
   }

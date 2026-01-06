@@ -1,21 +1,53 @@
 <style>
-  body {
-    font-family: 'Sarabun', sans-serif;
-    background-color: #f8fafc;
-    overflow-x: hidden;
-  }
-
-  ::-webkit-scrollbar {
-    width: 4px;
+  :root {
+    --gold-primary: #D4AF37;
+    --gold-secondary: #FFD700;
+    --gold-gradient: linear-gradient(135deg, #BF953F 0%, #FCF6BA 50%, #B38728 100%);
+    --dark-bg: #0a0a0a;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-dark: rgba(0, 0, 0, 0.6);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 2px;
+    background: var(--gold-primary);
+    border-radius: 10px;
   }
 
   .hide-scroll::-webkit-scrollbar {
     display: none;
+  }
+
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+
+  .glass-dark {
+    background: var(--glass-dark);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+  }
+
+  .gold-text {
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900;
+  }
+
+  .gold-bg {
+    background: var(--gold-gradient);
+    color: #000;
+  }
+
+  .gold-border {
+    border: 1px solid var(--gold-primary);
   }
 
   .amount-input {
@@ -24,30 +56,34 @@
     outline: none;
     text-align: center;
     width: 100%;
+    color: var(--gold-primary);
+    text-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
   }
 
   .amount-input::placeholder {
-    color: rgba(0, 0, 0, 0.1);
+    color: rgba(212, 175, 55, 0.1);
   }
 
   @keyframes slide-up {
     from {
       transform: translateY(100%);
+      opacity: 0;
     }
 
     to {
       transform: translateY(0);
+      opacity: 1;
     }
   }
 
   .animate-slide-up {
-    animation: slide-up 0.3s ease-out;
+    animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   @keyframes fade-in {
     from {
       opacity: 0;
-      transform: translateY(5px);
+      transform: translateY(10px);
     }
 
     to {
@@ -57,12 +93,12 @@
   }
 
   .animate-fade-in {
-    animation: fade-in 0.5s ease-out forwards;
+    animation: fade-in 0.6s ease-out forwards;
   }
 
   @keyframes scale-in {
     from {
-      transform: scale(0.9);
+      transform: scale(0.95);
       opacity: 0;
     }
 
@@ -73,42 +109,38 @@
   }
 
   .animate-scale-in {
-    animation: scale-in 0.2s ease-out forwards;
+    animation: scale-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
 
   .ai-glow {
-    animation: glow 2s infinite;
+    animation: gold-glow 3s infinite;
   }
 
-  @keyframes glow {
-    0% {
-      box-shadow: 0 0 5px #a855f7;
+  @keyframes gold-glow {
+
+    0%,
+    100% {
+      box-shadow: 0 0 5px rgba(212, 175, 55, 0.2);
     }
 
     50% {
-      box-shadow: 0 0 20px #a855f7;
-    }
-
-    100% {
-      box-shadow: 0 0 5px #a855f7;
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.5);
     }
   }
 
   .nav-add-glow {
-    animation: nav-glow 2s infinite;
+    animation: nav-gold-glow 2s infinite;
   }
 
-  @keyframes nav-glow {
-    0% {
-      box-shadow: 0 0 5px #2563eb;
+  @keyframes nav-gold-glow {
+
+    0%,
+    100% {
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
     }
 
     50% {
-      box-shadow: 0 0 25px #2563eb;
-    }
-
-    100% {
-      box-shadow: 0 0 5px #2563eb;
+      box-shadow: 0 0 30px rgba(212, 175, 55, 0.8);
     }
   }
 
@@ -160,27 +192,28 @@
 
   .wallet-card.active {
     transform: translateY(-4px);
-    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+    border-color: var(--gold-primary);
+    box-shadow: 0 10px 20px -5px rgba(212, 175, 55, 0.2);
   }
 
-  /* แก้ไข: ปรับขนาดช่อง OTP ให้เล็กลงเพื่อไม่ให้ล้นหน้าจอมือถือ */
   .otp-input {
     width: 2.4rem;
     height: 3rem;
     text-align: center;
     font-size: 1.25rem;
     font-weight: bold;
-    background: #f3f4f6;
-    border: 2px solid transparent;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 0.75rem;
+    color: white;
     outline: none;
     transition: all 0.2s;
   }
 
   .otp-input:focus {
-    border-color: #3b82f6;
-    background: white;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    border-color: var(--gold-primary);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
   }
 
   @media (min-width: 380px) {
@@ -188,5 +221,13 @@
       width: 2.8rem;
       height: 3.4rem;
     }
+  }
+
+  /* Custom utility for glass cards */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
   }
 </style>
