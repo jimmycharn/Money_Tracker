@@ -76,19 +76,57 @@
   };
 
   const DonutChart = ({ data, total }) => {
-    const size = 160; const strokeWidth = 20; const radius = (size - strokeWidth) / 2; const circumference = 2 * Math.PI * radius;
+    const size = 200; const strokeWidth = 24; const radius = (size - strokeWidth) / 2 - 20; const circumference = 2 * Math.PI * radius;
+    const center = size / 2;
+    let currentAngle = -90; // Start from top
+
+    // Calculate label positions
+    const labelsData = data.map((item, i) => {
+      const percentage = (item.value / total) * 100;
+      const angle = (percentage / 100) * 360;
+      const midAngle = currentAngle + angle / 2;
+      currentAngle += angle;
+
+      // Convert to radians
+      const rad = (midAngle * Math.PI) / 180;
+      const labelRadius = radius + 35;
+      const lineStart = radius + 12;
+      const lineEnd = radius + 25;
+
+      return {
+        ...item,
+        percentage,
+        lineStartX: center + Math.cos(rad) * lineStart,
+        lineStartY: center + Math.sin(rad) * lineStart,
+        lineEndX: center + Math.cos(rad) * lineEnd,
+        lineEndY: center + Math.sin(rad) * lineEnd,
+        labelX: center + Math.cos(rad) * labelRadius,
+        labelY: center + Math.sin(rad) * labelRadius,
+        textAnchor: midAngle > -90 && midAngle < 90 ? 'start' : 'end'
+      };
+    });
+
     let currentOffset = 0;
     return (
       <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="transform -rotate-90">
-          <circle cx={size / 2} cy={size / 2} r={radius} fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth={strokeWidth} />
-          {data.map((item, i) => {
-            const percentage = (item.value / total) * 100;
-            const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
-            const strokeDashoffset = -currentOffset;
-            currentOffset += (percentage / 100) * circumference;
-            return <circle key={i} cx={size / 2} cy={size / 2} r={radius} fill="transparent" stroke={item.color} strokeWidth={strokeWidth} strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset} className="transition-all duration-500" />;
-          })}
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
+          <g className="transform -rotate-90 origin-center" style={{ transformOrigin: `${center}px ${center}px` }}>
+            <circle cx={center} cy={center} r={radius} fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth={strokeWidth} />
+            {data.map((item, i) => {
+              const percentage = (item.value / total) * 100;
+              const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
+              const strokeDashoffset = -currentOffset;
+              currentOffset += (percentage / 100) * circumference;
+              return <circle key={i} cx={center} cy={center} r={radius} fill="transparent" stroke={item.color} strokeWidth={strokeWidth} strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset} className="transition-all duration-500" />;
+            })}
+          </g>
+          {/* Lines and labels */}
+          {labelsData.filter(l => l.percentage >= 5).map((label, i) => (
+            <g key={i}>
+              <line x1={label.lineStartX} y1={label.lineStartY} x2={label.lineEndX} y2={label.lineEndY} stroke={label.color} strokeWidth="2" strokeLinecap="round" />
+              <text x={label.labelX} y={label.labelY} textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="11" fontWeight="bold">{Math.round(label.percentage)}%</text>
+            </g>
+          ))}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <div className="text-xs font-black text-gray-500 uppercase tracking-tighter">ยอดรวม</div>
@@ -783,7 +821,7 @@
           <nav className="fixed bottom-6 left-4 right-4 glass-dark border border-white/10 px-6 py-4 flex justify-between items-center z-50 max-w-md mx-auto rounded-[2.5rem] shadow-2xl">
             <button onClick={() => setActiveTab('dashboard')} className={`p-2 transition-all ${activeTab === 'dashboard' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.PieChart size={24} /></button>
             <button onClick={() => setActiveTab('history')} className={`p-2 transition-all ${activeTab === 'history' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.List size={24} /></button>
-            <button onClick={() => { setEditTx(null); setActiveTab('add'); }} className="w-16 h-16 gold-bg rounded-[1.5rem] flex items-center justify-center text-black shadow-2xl shadow-gold-900/40 -mt-16 border-[6px] border-[#0a0a0a] active:scale-90 transition-all"><Icons.PlusCircle size={32} /></button>
+            <button onClick={() => { setEditTx(null); setActiveTab('add'); }} className="w-16 h-16 gold-bg rounded-[1.5rem] flex items-center justify-center text-black shadow-2xl shadow-gold-900/40 -mt-16 border-[6px] border-[#0a0a0a] active:scale-90 transition-all nav-add-glow"><Icons.PlusCircle size={32} /></button>
             <button onClick={() => setActiveTab('settings')} className={`p-2 transition-all ${activeTab === 'settings' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.Settings size={24} /></button>
             <button onClick={() => setActiveTab('me')} className={`p-2 transition-all ${activeTab === 'me' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.User size={24} /></button>
           </nav>
