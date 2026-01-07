@@ -62,8 +62,8 @@
     return (
       <div className="w-full h-32 mt-4 glass rounded-3xl p-4 border border-white/5 overflow-hidden">
         <div className="flex justify-between items-center mb-2">
-          <div className="flex items-center gap-1.5 text-[10px] font-black text-gold-primary uppercase tracking-widest"><Icons.TrendingUp size={14} /> แนวโน้มการใช้จ่าย</div>
-          <div className="text-[10px] font-bold text-gray-500">30 วันล่าสุด</div>
+          <div className="flex items-center gap-1.5 text-xs font-black text-gold-primary uppercase tracking-widest"><Icons.TrendingUp size={14} /> แนวโน้มการใช้จ่าย</div>
+          <div className="text-xs font-bold text-gray-500">30 วันล่าสุด</div>
         </div>
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
           <defs><linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity="0.2" /><stop offset="100%" stopColor={color} stopOpacity="0" /></linearGradient></defs>
@@ -91,7 +91,7 @@
           })}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <div className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">ยอดรวม</div>
+          <div className="text-xs font-black text-gray-500 uppercase tracking-tighter">ยอดรวม</div>
           <div className="text-lg font-black text-white leading-none">{formatCurrency(total).replace('฿', '')}</div>
         </div>
       </div>
@@ -221,20 +221,20 @@
         </div>
         <div className="glass-dark p-8 rounded-[2.5rem] shadow-2xl mb-8 text-center border border-white/10 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 gold-bg opacity-50"></div>
-          <div className="text-[10px] font-black gold-text uppercase tracking-[0.2em] mb-2 opacity-80">เงินเหลือเก็บสุทธิ</div>
+          <div className="text-xs font-black gold-text uppercase tracking-[0.2em] mb-2 opacity-80">เงินเหลือเก็บสุทธิ</div>
           <div className="text-5xl font-black text-white tracking-tighter mb-4">{formatCurrency(totalIncAll - totalExpAll).replace('฿', '')}<span className="text-lg gold-text ml-1">฿</span></div>
           <TrendChart data={trendData} color="#D4AF37" />
         </div>
         <div className="grid grid-cols-2 gap-4 mb-8">
           <div onClick={() => setDashboardTab('expense')} className={`p-5 rounded-[2rem] border transition-all cursor-pointer ${dashboardTab === 'expense' ? 'bg-white/5 border-gold-primary/30 scale-[1.02]' : 'bg-white/5 border-transparent opacity-40'}`}>
-            <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">รายจ่าย</div>
+            <div className="text-xs text-gray-500 font-black uppercase tracking-widest mb-2">รายจ่าย</div>
             <div className="text-2xl font-black text-white">{formatCurrency(totalExpAll).replace('฿', '')}</div>
-            <div className="text-[10px] text-gold-primary font-bold mt-1 opacity-80">เฉลี่ย {formatCurrency(avgExp)}/วัน</div>
+            <div className="text-xs text-gold-primary font-bold mt-1 opacity-80">เฉลี่ย {formatCurrency(avgExp)}/วัน</div>
           </div>
           <div onClick={() => setDashboardTab('income')} className={`p-5 rounded-[2rem] border transition-all cursor-pointer ${dashboardTab === 'income' ? 'bg-white/5 border-gold-primary/30 scale-[1.02]' : 'bg-white/5 border-transparent opacity-40'}`}>
-            <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">รายรับ</div>
+            <div className="text-xs text-gray-500 font-black uppercase tracking-widest mb-2">รายรับ</div>
             <div className="text-2xl font-black text-white">{formatCurrency(totalIncAll).replace('฿', '')}</div>
-            <div className="text-[10px] text-gold-primary font-bold mt-1 opacity-80">เฉลี่ย {formatCurrency(avgInc)}/วัน</div>
+            <div className="text-xs text-gold-primary font-bold mt-1 opacity-80">เฉลี่ย {formatCurrency(avgInc)}/วัน</div>
           </div>
         </div>
         <div className="glass-dark rounded-[2.5rem] p-8 shadow-2xl flex-1 flex flex-col items-center border border-white/10">
@@ -359,7 +359,7 @@
               {categories.filter(c => c.type === type).map(cat => (
                 <button key={cat.id} type="button" onClick={() => setCategoryId(cat.id)} className={`p-2 rounded-2xl flex flex-col items-center transition-all ${categoryId === cat.id ? 'bg-white/10 ring-1 ring-gold-primary/50' : 'hover:bg-white/5'}`}>
                   <div className="w-14 h-14 rounded-2xl text-white flex items-center justify-center font-black text-xl shadow-lg" style={{ backgroundColor: cat.color, boxShadow: `0 8px 20px -6px ${cat.color}66` }}>{cat.name[0]}</div>
-                  <span className="text-[10px] mt-2.5 font-black text-gray-500 truncate w-full text-center group-hover:text-gray-300">{cat.name}</span>
+                  <span className="text-xs mt-2.5 font-black text-gray-500 truncate w-full text-center group-hover:text-gray-300">{cat.name}</span>
                 </button>
               ))}
             </div>
@@ -379,9 +379,33 @@
     const [startDate, setStartDate] = useState(toLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1)));
     const [endDate, setEndDate] = useState(toLocalDateString(new Date()));
 
+    // Get categories filtered by current type selection
+    const filteredCategories = filterType === 'all'
+      ? categories
+      : categories.filter(c => c.type === filterType);
+
+    // Handle type filter change - reset category filter when type changes
+    const handleTypeChange = (newType) => {
+      setFilterType(newType);
+      // Reset category filter when type changes, because old category may not be valid for new type
+      if (filterCatId !== 'all') {
+        const currentCat = categories.find(c => c.id === filterCatId);
+        if (currentCat && newType !== 'all' && currentCat.type !== newType) {
+          setFilterCatId('all');
+        }
+      }
+    };
+
     const filtered = transactions.filter(t => (filterType === 'all' || t.type === filterType) && (activeWalletId === 'all' || t.walletId === activeWalletId) && (filterCatId === 'all' || t.categoryId === filterCatId) && (t.date >= startDate && t.date <= endDate)).sort((a, b) => b.date.localeCompare(a.date));
     const totalFiltered = filtered.reduce((s, t) => s + (t.type === 'income' ? t.amount : -t.amount), 0);
     const grouped = filtered.reduce((acc, t) => { if (!acc[t.date]) acc[t.date] = []; acc[t.date].push(t); return acc; }, {});
+
+    // Calculate daily summaries
+    const getDailySummary = (dayTransactions) => {
+      const income = dayTransactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+      const expense = dayTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      return { income, expense };
+    };
 
     return (
       <div className="pb-32 pt-6 px-4 min-h-screen bg-[#0a0a0a] flex flex-col max-w-md mx-auto w-full">
@@ -389,7 +413,7 @@
           <div className="flex justify-between items-end">
             <h2 className="text-3xl font-black text-white tracking-tight">ประวัติ</h2>
             <div className="text-right">
-              <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">ยอดรวมช่วงนี้</div>
+              <div className="text-xs font-black text-gray-500 uppercase tracking-widest mb-1">ยอดรวมช่วงนี้</div>
               <div className={`text-lg font-black ${totalFiltered >= 0 ? 'gold-text' : 'text-red-500'}`}>{formatCurrency(totalFiltered)}</div>
             </div>
           </div>
@@ -399,41 +423,50 @@
           </div>
           <div className="flex gap-2 overflow-x-auto hide-scroll pb-2">
             {['all', 'expense', 'income'].map(m => (
-              <button key={m} onClick={() => setFilterType(m)} className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${filterType === m ? 'gold-bg text-black border-gold-primary shadow-lg shadow-gold-900/20' : 'bg-white/5 text-gray-500 border-white/5'}`}>
+              <button key={m} onClick={() => handleTypeChange(m)} className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${filterType === m ? 'gold-bg text-black border-gold-primary shadow-lg shadow-gold-900/20' : 'bg-white/5 text-gray-500 border-white/5'}`}>
                 {m === 'all' ? 'ทั้งหมด' : (m === 'expense' ? 'จ่าย' : 'รับ')}
               </button>
             ))}
           </div>
           <div className="flex gap-2 overflow-x-auto hide-scroll pb-2">
-            <button onClick={() => setFilterCatId('all')} className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all border whitespace-nowrap ${filterCatId === 'all' ? 'gold-bg text-black border-gold-primary shadow-lg shadow-gold-900/20' : 'bg-white/5 text-gray-500 border-white/5'}`}>ทุกหมวดหมู่</button>
-            {categories.map(c => (<button key={c.id} onClick={() => setFilterCatId(c.id)} className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all border whitespace-nowrap ${filterCatId === c.id ? 'gold-bg text-black border-gold-primary shadow-lg shadow-gold-900/20' : 'bg-white/5 text-gray-500 border-white/5'}`}>{c.name}</button>))}
+            <button onClick={() => setFilterCatId('all')} className={`px-4 py-2 rounded-xl text-xs font-black transition-all border whitespace-nowrap ${filterCatId === 'all' ? 'gold-bg text-black border-gold-primary shadow-lg shadow-gold-900/20' : 'bg-white/5 text-gray-500 border-white/5'}`}>ทุกหมวดหมู่</button>
+            {filteredCategories.map(c => (<button key={c.id} onClick={() => setFilterCatId(c.id)} className={`px-4 py-2 rounded-xl text-xs font-black transition-all border whitespace-nowrap ${filterCatId === c.id ? 'gold-bg text-black border-gold-primary shadow-lg shadow-gold-900/20' : 'bg-white/5 text-gray-500 border-white/5'}`}>{c.name}</button>))}
           </div>
         </div>
         <div className="space-y-8">
-          {Object.keys(grouped).map(date => (
-            <div key={date}>
-              <div className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-4 px-2">{new Date(date).toLocaleDateString('th-TH', { dateStyle: 'long' })}</div>
-              <div className="glass-dark rounded-[2rem] border border-white/10 overflow-hidden shadow-xl">
-                {grouped[date].map(t => {
-                  const cat = categories.find(c => c.id === t.categoryId) || { name: 'อื่นๆ', color: '#333' };
-                  return (
-                    <div key={t.id} onClick={() => { setEditTx(t); setActiveTab('add'); }} className="p-5 flex justify-between items-center border-b border-white/5 last:border-0 active:bg-white/5 transition-colors cursor-pointer group">
-                      <div className="flex items-center gap-5">
-                        <div className="w-12 h-12 rounded-2xl text-white flex items-center justify-center font-black text-lg shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: cat.color, boxShadow: `0 6px 15px -4px ${cat.color}66` }}>{cat.name[0]}</div>
-                        <div>
-                          <div className="font-black text-white text-sm mb-0.5">{cat.name}</div>
-                          <div className="text-[10px] text-gray-500 font-bold">{t.note || 'ไม่มีบันทึก'}</div>
+          {Object.keys(grouped).map(date => {
+            const dailySummary = getDailySummary(grouped[date]);
+            return (
+              <div key={date}>
+                <div className="flex justify-between items-center mb-4 px-2">
+                  <div className="text-xs font-black text-gray-600 uppercase tracking-[0.15em]">{new Date(date).toLocaleDateString('th-TH', { dateStyle: 'long' })}</div>
+                  <div className="flex gap-3 text-xs font-bold">
+                    {dailySummary.income > 0 && <span className="gold-text">+{dailySummary.income.toLocaleString()}</span>}
+                    {dailySummary.expense > 0 && <span className="text-red-400">-{dailySummary.expense.toLocaleString()}</span>}
+                  </div>
+                </div>
+                <div className="glass-dark rounded-[2rem] border border-white/10 overflow-hidden shadow-xl">
+                  {grouped[date].map(t => {
+                    const cat = categories.find(c => c.id === t.categoryId) || { name: 'อื่นๆ', color: '#333' };
+                    return (
+                      <div key={t.id} onClick={() => { setEditTx(t); setActiveTab('add'); }} className="p-5 flex justify-between items-center border-b border-white/5 last:border-0 active:bg-white/5 transition-colors cursor-pointer group">
+                        <div className="flex items-center gap-5">
+                          <div className="w-12 h-12 rounded-2xl text-white flex items-center justify-center font-black text-lg shadow-lg group-hover:scale-110 transition-transform" style={{ backgroundColor: cat.color, boxShadow: `0 6px 15px -4px ${cat.color}66` }}>{cat.name[0]}</div>
+                          <div>
+                            <div className="font-black text-white text-sm mb-0.5">{cat.name}</div>
+                            <div className="text-xs text-gray-500 font-bold">{t.note || 'ไม่มีบันทึก'}</div>
+                          </div>
+                        </div>
+                        <div className={`text-base font-black tracking-tight ${t.type === 'income' ? 'gold-text' : 'text-white'}`}>
+                          {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()}
                         </div>
                       </div>
-                      <div className={`text-base font-black tracking-tight ${t.type === 'income' ? 'gold-text' : 'text-white'}`}>
-                        {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString()}
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
