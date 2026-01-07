@@ -240,17 +240,26 @@
         <div className="glass-dark rounded-[2.5rem] p-8 shadow-2xl flex-1 flex flex-col items-center border border-white/10">
           <div className="mb-10"><DonutChart data={chartData} total={totalDisplay} /></div>
           <div className="space-y-6 w-full">
-            {chartData.map(cat => (
-              <div key={cat.id} className="group">
-                <div className="flex justify-between text-xs mb-2 font-bold px-1">
-                  <span className="text-gray-400 group-hover:text-white transition-colors">{cat.name}</span>
-                  <span className="text-white">{formatCurrency(cat.value)}</span>
+            {chartData.map(cat => {
+              const category = categories.find(c => c.id === cat.id);
+              const budget = category?.budget || 0;
+              const budgetPercent = budget > 0 ? (cat.value / budget) * 100 : 0;
+              const isOverBudget = budget > 0 && cat.value > budget;
+              return (
+                <div key={cat.id} className="group">
+                  <div className="flex justify-between text-xs mb-2 font-bold px-1">
+                    <span className="text-gray-400 group-hover:text-white transition-colors">{cat.name}</span>
+                    <div className="text-right">
+                      <span className="text-white">{formatCurrency(cat.value)}</span>
+                      {budget > 0 && <span className={`ml-1 ${isOverBudget ? 'text-red-400' : 'text-gray-500'}`}>/ {formatCurrency(budget)}</span>}
+                    </div>
+                  </div>
+                  <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full transition-all duration-1000 ${isOverBudget ? 'bg-red-500' : ''}`} style={{ width: budget > 0 ? `${Math.min(budgetPercent, 100)}%` : `${(cat.value / totalDisplay) * 100}%`, backgroundColor: isOverBudget ? undefined : cat.color }}></div>
+                  </div>
                 </div>
-                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${(cat.value / totalDisplay) * 100}%`, backgroundColor: cat.color }}></div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -477,12 +486,14 @@
     const [editing, setEditing] = useState(null);
     const [tempName, setTempName] = useState('');
     const [tempColor, setTempColor] = useState('#D4AF37');
+    const [tempBudget, setTempBudget] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const openEditor = (cat) => { setEditing(cat); setTempName(cat ? cat.name : ''); setTempColor(cat ? cat.color : '#D4AF37'); setIsModalOpen(true); };
+    const openEditor = (cat) => { setEditing(cat); setTempName(cat ? cat.name : ''); setTempColor(cat ? cat.color : '#D4AF37'); setTempBudget(cat?.budget ? String(cat.budget) : ''); setIsModalOpen(true); };
     const handleSave = () => {
       if (!tempName) return; let newCats = [...categories];
-      if (editing) newCats = newCats.map(c => c.id === editing.id ? { ...c, name: tempName, color: tempColor } : c);
-      else newCats.push({ id: generateId(), name: tempName, type: tab, color: tempColor });
+      const budgetValue = parseFloat(tempBudget) || 0;
+      if (editing) newCats = newCats.map(c => c.id === editing.id ? { ...c, name: tempName, color: tempColor, budget: budgetValue } : c);
+      else newCats.push({ id: generateId(), name: tempName, type: tab, color: tempColor, budget: budgetValue });
       setCategories(newCats); saveToBackend('categories', newCats); setIsModalOpen(false);
     };
     return (
@@ -518,11 +529,17 @@
               <h3 className="text-2xl font-black text-white mb-8 tracking-tight">ข้อมูลหมวดหมู่</h3>
               <div className="space-y-6">
                 <div>
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">ชื่อหมวดหมู่</label>
+                  <label className="text-xs font-black text-gray-500 uppercase tracking-widest mb-2 block">ชื่อหมวดหมู่</label>
                   <input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl outline-none font-black text-white focus:border-gold-primary/30 transition-all" placeholder="เช่น อาหาร, เดินทาง..." />
                 </div>
+                {tab === 'expense' && (
+                  <div>
+                    <label className="text-xs font-black text-gray-500 uppercase tracking-widest mb-2 block">งบประจำเดือน (ไม่บังคับ)</label>
+                    <input type="number" value={tempBudget} onChange={e => setTempBudget(e.target.value)} className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl outline-none font-black text-white focus:border-gold-primary/30 transition-all" placeholder="0" />
+                  </div>
+                )}
                 <div>
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">สีประจำหมวด</label>
+                  <label className="text-xs font-black text-gray-500 uppercase tracking-widest mb-2 block">สีประจำหมวด</label>
                   <div className="flex gap-4 items-center">
                     <input type="color" value={tempColor} onChange={e => setTempColor(e.target.value)} className="w-20 h-20 bg-transparent border-none cursor-pointer rounded-2xl overflow-hidden" />
                     <div className="flex-1 text-xs font-bold text-gray-400">เลือกสีที่ช่วยให้คุณจดจำหมวดหมู่ได้ง่ายขึ้น</div>
