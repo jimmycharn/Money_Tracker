@@ -122,7 +122,7 @@
             })}
           </g>
           {/* Lines and labels */}
-          {labelsData.filter(l => l.percentage >= 5).map((label, i) => (
+          {labelsData.filter(l => l.percentage >= 1).map((label, i) => (
             <g key={i}>
               <line x1={label.lineStartX} y1={label.lineStartY} x2={label.lineEndX} y2={label.lineEndY} stroke={label.color} strokeWidth="2" strokeLinecap="round" />
               <text x={label.labelX} y={label.labelY} textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="11" fontWeight="bold">{Math.round(label.percentage)}%</text>
