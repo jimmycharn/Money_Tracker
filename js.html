@@ -108,7 +108,7 @@
   const TrendChart = ({ data, color = '#D4AF37' }) => {
     if (!data || data.length === 0) return null;
     const max = Math.max(...data.map(d => d.value), 100);
-    const width = 300; const height = 100; const padding = 10;
+    const width = 300; const height = 100; const padding = 20;
     const points = data.map((d, i) => {
       const x = (i / (data.length - 1)) * (width - 2 * padding) + padding;
       const y = height - ((d.value / max) * (height - 2 * padding) + padding);
