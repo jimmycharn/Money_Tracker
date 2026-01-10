@@ -885,7 +885,7 @@
           {activeTab === 'add' && <ScreenAdd editTx={editTx} setEditTx={setEditTx} setActiveTab={setActiveTab} categories={categories} wallets={wallets} setTransactions={setTransactions} saveToBackend={saveToBackend} user={user} showNotification={showNotification} requestConfirm={requestConfirm} />}
           {activeTab === 'history' && <ScreenHistory transactions={transactions} categories={categories} activeWalletId={activeWalletId} setEditTx={setEditTx} setActiveTab={setActiveTab} />}
           {activeTab === 'settings' && (
-            <div className="p-8 pt-12 bg-[#0a0a0a] min-h-screen">
+            <div className="p-8 pt-12 pb-40 bg-[#0a0a0a] min-h-screen">
               <h2 className="text-3xl font-black mb-10 tracking-tight">ตั้งค่า</h2>
               <div className="space-y-4">
                 <div onClick={toggleTheme} className="flex items-center justify-between p-6 glass-dark rounded-[1.5rem] cursor-pointer border border-white/5 hover:border-gold-primary/30 transition-all group">
