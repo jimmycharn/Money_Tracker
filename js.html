@@ -361,7 +361,7 @@
     );
   };
 
-  const ScreenAdd = ({ editTx, setEditTx, setActiveTab, categories, wallets, setTransactions, saveToBackend, user, showNotification, requestConfirm }) => {
+  const ScreenAdd = ({ editTx, setEditTx, setActiveTab, categories, wallets, setTransactions, saveToBackend, user, showNotification, requestConfirm, setActiveWalletId }) => {
     const [type, setType] = useState(editTx ? editTx.type : 'expense');
     const [amount, setAmount] = useState(editTx ? String(editTx.amount) : '');
     const [date, setDate] = useState(editTx ? editTx.date : toLocalDateString(new Date()));
@@ -384,6 +384,7 @@
       if (editTx) setTransactions(prev => prev.map(t => t.id === editTx.id ? newTx : t));
       else setTransactions(prev => [newTx, ...prev]);
       saveToBackend('transaction', newTx);
+      setActiveWalletId(newTx.walletId);
       setActiveTab('history');
       setEditTx(null);
       return true;
@@ -426,9 +427,22 @@
     return (
       <div className={`min-h-screen ${type === 'expense' ? 'bg-[#0a0a0a]' : 'bg-[#0a0a0a]'} flex flex-col max-w-md mx-auto w-full`}>
         <div className="p-6 flex justify-between items-center px-8">
-          {editTx ? <button onClick={handleDelete} className="text-red-500 hover:text-red-400 transition-colors"><Icons.Trash2 /></button> : <div />}
+          {editTx ? <button onClick={handleDelete} className="text-red-500 hover:text-red-400 transition-colors"><Icons.Trash2 /></button> : <div className="w-8" />}
           <h2 className="text-xl font-black text-white tracking-tight">{editTx ? 'แก้ไขรายการ' : 'รายการใหม่'}</h2>
           <button onClick={() => { setEditTx(null); setActiveTab('history'); }} className="text-gray-500 hover:text-white transition-colors"><Icons.X /></button>
+        </div>
+        <div className="px-8 mb-4 flex justify-center">
+          <div className="flex gap-2 overflow-x-auto hide-scroll p-1">
+            {wallets.map(w => (
+              <button
+                key={w.id}
+                onClick={() => setWalletId(w.id)}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all border ${walletId === w.id ? 'gold-bg text-black border-gold-primary' : 'bg-white/5 text-gray-500 border-white/5'}`}
+              >
+                {w.name}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="px-8 mb-6 space-y-3">
           <div className="glass-dark rounded-2xl p-3 flex gap-3 border border-white/10 shadow-lg">
@@ -448,12 +462,6 @@
           <div className="flex gap-3 mt-8">
             <div className="relative">
               <input type="date" value={date} onChange={e => setDate(e.target.value)} className="bg-white/5 border border-white/10 px-5 py-2.5 rounded-2xl text-xs font-bold text-gray-300 outline-none focus:border-gold-primary/30 transition-all" />
-            </div>
-            <div className="relative">
-              <select value={walletId} onChange={e => setWalletId(e.target.value)} className="bg-white/5 border border-white/10 px-5 py-2.5 rounded-2xl text-xs font-bold text-gray-300 outline-none focus:border-gold-primary/30 transition-all appearance-none pr-10">
-                {wallets.map(w => <option key={w.id} value={w.id} className="bg-[#1a1a1a]">{w.name}</option>)}
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-600 text-[10px]">▼</div>
             </div>
           </div>
         </div>
@@ -882,7 +890,7 @@
       <div className="bg-[#0a0a0a] min-h-screen text-white font-sans selection:bg-gold-primary/30">
         <div className="max-w-md mx-auto relative min-h-screen">
           {activeTab === 'dashboard' && <ScreenDashboard transactions={transactions} categories={categories} wallets={wallets} activeWalletId={activeWalletId} setActiveWalletId={setActiveWalletId} />}
-          {activeTab === 'add' && <ScreenAdd editTx={editTx} setEditTx={setEditTx} setActiveTab={setActiveTab} categories={categories} wallets={wallets} setTransactions={setTransactions} saveToBackend={saveToBackend} user={user} showNotification={showNotification} requestConfirm={requestConfirm} />}
+          {activeTab === 'add' && <ScreenAdd editTx={editTx} setEditTx={setEditTx} setActiveTab={setActiveTab} categories={categories} wallets={wallets} setTransactions={setTransactions} saveToBackend={saveToBackend} user={user} showNotification={showNotification} requestConfirm={requestConfirm} setActiveWalletId={setActiveWalletId} />}
           {activeTab === 'history' && <ScreenHistory transactions={transactions} categories={categories} activeWalletId={activeWalletId} setEditTx={setEditTx} setActiveTab={setActiveTab} />}
           {activeTab === 'settings' && (
             <div className="p-8 pt-12 pb-40 bg-[#0a0a0a] min-h-screen">
