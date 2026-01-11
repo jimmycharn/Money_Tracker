@@ -117,12 +117,12 @@
     const pathData = points.length > 0 ? `M ${points[0].x} ${points[0].y} ` + points.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ') : '';
     const areaData = pathData + ` L ${points[points.length - 1].x} ${height} L ${points[0].x} ${height} Z`;
     return (
-      <div className="w-full h-32 mt-4 glass rounded-3xl p-4 border border-white/5 overflow-hidden">
-        <div className="flex justify-between items-center mb-2">
+      <div className="w-full h-32 mt-4 glass rounded-3xl p-4 border border-white/5 overflow-hidden flex flex-col">
+        <div className="flex justify-between items-center mb-2 shrink-0">
           <div className="flex items-center gap-1.5 text-xs font-black text-gold-primary uppercase tracking-widest"><Icons.TrendingUp size={14} /> ภาพรวมการใช้จ่าย</div>
           <div className="text-xs font-bold text-gray-500">30 วันล่าสุด</div>
         </div>
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full flex-1 overflow-visible">
           <defs><linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity="0.2" /><stop offset="100%" stopColor={color} stopOpacity="0" /></linearGradient></defs>
           <path d={areaData} fill="url(#trendGradient)" className="trend-line" />
           <path d={pathData} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="trend-line" />
