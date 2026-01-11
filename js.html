@@ -485,7 +485,7 @@
     );
   };
 
-  const ScreenHistory = ({ transactions, categories, activeWalletId, setEditTx, setActiveTab }) => {
+  const ScreenHistory = ({ transactions, categories, wallets, activeWalletId, setActiveWalletId, setEditTx, setActiveTab }) => {
     const [filterType, setFilterType] = useState('all');
     const [filterCatId, setFilterCatId] = useState('all');
     const [startDate, setStartDate] = useState(toLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1)));
@@ -552,6 +552,23 @@
 
     return (
       <div className="pb-32 pt-6 px-4 min-h-screen bg-[#0a0a0a] flex flex-col max-w-md mx-auto w-full">
+        <div className="flex items-center mb-8 overflow-x-auto gap-3 hide-scroll pb-2">
+          <button
+            onClick={() => setActiveWalletId('all')}
+            className={`px-6 py-3 rounded-2xl font-black text-xs whitespace-nowrap transition-all border ${activeWalletId === 'all' ? 'gold-bg text-black border-gold-primary shadow-lg shadow-gold-900/20' : 'bg-white/5 text-gray-500 border-white/5'}`}
+          >
+            ทั้งหมด
+          </button>
+          {wallets.map(w => (
+            <button
+              key={w.id}
+              onClick={() => setActiveWalletId(w.id)}
+              className={`px-6 py-3 rounded-2xl font-black text-xs whitespace-nowrap transition-all border ${activeWalletId === w.id ? 'gold-bg text-black border-gold-primary shadow-lg shadow-gold-900/20' : 'bg-white/5 text-gray-500 border-white/5'}`}
+            >
+              {w.name}
+            </button>
+          ))}
+        </div>
         <div className="mb-8 space-y-6">
           <div className="flex justify-between items-end">
             <div className="flex items-center gap-3">
@@ -992,7 +1009,7 @@
         <div className="max-w-md mx-auto relative min-h-screen">
           {activeTab === 'dashboard' && <ScreenDashboard transactions={transactions} categories={categories} wallets={wallets} activeWalletId={activeWalletId} setActiveWalletId={setActiveWalletId} />}
           {activeTab === 'add' && <ScreenAdd editTx={editTx} setEditTx={setEditTx} setActiveTab={setActiveTab} categories={categories} wallets={wallets} setTransactions={setTransactions} saveToBackend={saveToBackend} user={user} showNotification={showNotification} requestConfirm={requestConfirm} setActiveWalletId={setActiveWalletId} />}
-          {activeTab === 'history' && <ScreenHistory transactions={transactions} categories={categories} activeWalletId={activeWalletId} setEditTx={setEditTx} setActiveTab={setActiveTab} />}
+          {activeTab === 'history' && <ScreenHistory transactions={transactions} categories={categories} wallets={wallets} activeWalletId={activeWalletId} setActiveWalletId={setActiveWalletId} setEditTx={setEditTx} setActiveTab={setActiveTab} />}
           {activeTab === 'settings' && (
             <div className="p-8 pt-12 pb-40 bg-[#0a0a0a] min-h-screen">
               <h2 className="text-3xl font-black mb-10 tracking-tight">ตั้งค่า</h2>
