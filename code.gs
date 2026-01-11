@@ -5,6 +5,7 @@ const SHEET_CATEGORIES = 'Categories';
 const SHEET_SETTINGS = 'Settings';
 const SHEET_USERS = 'Users';
 const SHEET_WALLETS = 'Wallets';
+const SHEET_SAVINGS_GOALS = 'SavingsGoals';
 
 // **************************************************************************
 // 2. GEMINI API KEY
@@ -45,6 +46,9 @@ function setupDatabase() {
   }
   if (!ss.getSheetByName(SHEET_WALLETS)) {
     ss.insertSheet(SHEET_WALLETS).appendRow(['ID', 'Name', 'Type', 'InitialBalance', 'Color', 'Username']);
+  }
+  if (!ss.getSheetByName(SHEET_SAVINGS_GOALS)) {
+    ss.insertSheet(SHEET_SAVINGS_GOALS).appendRow(['ID', 'Name', 'TargetAmount', 'CurrentAmount', 'Color', 'Icon', 'Username']);
   }
 }
 
@@ -261,6 +265,7 @@ function getInitialData(username) {
   const transactions = getSheetData(SHEET_TRANSACTIONS);
   const categories = getSheetData(SHEET_CATEGORIES);
   const wallets = getSheetData(SHEET_WALLETS);
+  const savingsGoals = getSheetData(SHEET_SAVINGS_GOALS);
   const settingsRaw = getSheetData(SHEET_SETTINGS);
   const settings = { cutoffDay: 1 };
   settingsRaw.forEach(s => settings[s.key] = s.value);
@@ -279,7 +284,7 @@ function getInitialData(username) {
     if (!t.walletId) t.walletId = defaultWalletId;
   });
 
-  return { status: 'success', transactions, categories, wallets, settings };
+  return { status: 'success', transactions, categories, wallets, savingsGoals, settings };
 }
 
 function exportData(username) {
@@ -388,6 +393,24 @@ function updateWallets(wallets, username) {
   return { success: true };
 }
 
+function updateSavingsGoals(goals, username) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(SHEET_SAVINGS_GOALS);
+  if (!sheet) {
+    setupDatabase();
+    sheet = ss.getSheetByName(SHEET_SAVINGS_GOALS);
+  }
+  if (!sheet) return { success: false, error: 'Database error: Could not create sheet' };
+  const data = sheet.getDataRange().getValues();
+  let uIdx = findColumnIndex(data[0], 'Username');
+  if (uIdx === -1) uIdx = data[0].length - 1;
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][uIdx]) === String(username)) sheet.deleteRow(i + 1);
+  }
+  goals.forEach(g => sheet.appendRow([g.id, g.name, g.targetamount || 0, g.currentamount || 0, g.color, g.icon || 'Star', username]));
+  return { success: true };
+}
+
 function deleteCategory(id, username) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const catSheet = ss.getSheetByName(SHEET_CATEGORIES);
@@ -452,6 +475,23 @@ function deleteWallet(id, username) {
   }
   
   return { success: true };
+}
+
+function deleteSavingsGoal(id, username) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(SHEET_SAVINGS_GOALS);
+  if (!sheet) return { success: true }; // Sheet doesn't exist, so goal is effectively deleted
+  const data = sheet.getDataRange().getValues();
+  const idIdx = findColumnIndex(data[0], 'ID');
+  const uIdx = findColumnIndex(data[0], 'Username');
+  
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][idIdx]) === String(id) && String(data[i][uIdx]) === String(username)) {
+      sheet.deleteRow(i + 1);
+      return { success: true };
+    }
+  }
+  return { success: false };
 }
 
 function transferBetweenWallets(fromId, toId, amount, date, note, username) {

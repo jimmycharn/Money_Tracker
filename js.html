@@ -27,7 +27,8 @@
     Lock: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>,
     Wallet: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg>,
     TrendingUp: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>,
-    Search: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    Search: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>,
+    Star: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
   };
 
   const ThemeContext = React.createContext();
@@ -931,6 +932,149 @@
     );
   };
 
+  const ScreenSavings = ({ savingsGoals, setSavingsGoals, saveToBackend, requestConfirm }) => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editing, setEditing] = useState(null);
+    const [tempName, setTempName] = useState('');
+    const [tempTarget, setTempTarget] = useState('');
+    const [tempCurrent, setTempCurrent] = useState('');
+    const [tempColor, setTempColor] = useState('#D4AF37');
+
+    const openEditor = (goal) => {
+      setEditing(goal);
+      setTempName(goal ? goal.name : '');
+      setTempTarget(goal ? String(goal.targetamount) : '');
+      setTempCurrent(goal ? String(goal.currentamount) : '0');
+      setTempColor(goal ? goal.color : '#D4AF37');
+      setIsModalOpen(true);
+    };
+
+    const handleSave = () => {
+      if (!tempName || !tempTarget) return;
+      let newGoals = [...savingsGoals];
+      const targetVal = parseFloat(tempTarget) || 0;
+      const currentVal = parseFloat(tempCurrent) || 0;
+
+      if (editing) {
+        newGoals = newGoals.map(g => g.id === editing.id ? { ...g, name: tempName, targetamount: targetVal, currentamount: currentVal, color: tempColor } : g);
+      } else {
+        newGoals.push({ id: generateId(), name: tempName, targetamount: targetVal, currentamount: currentVal, color: tempColor, icon: 'Star' });
+      }
+      setSavingsGoals(newGoals);
+      saveToBackend('savings_goals', newGoals);
+      setIsModalOpen(false);
+    };
+
+    const handleAddFunds = (goal, amount) => {
+      const newAmount = (goal.currentamount || 0) + amount;
+      if (newAmount < 0) return; // Prevent negative
+      const newGoals = savingsGoals.map(g => g.id === goal.id ? { ...g, currentamount: newAmount } : g);
+      setSavingsGoals(newGoals);
+      saveToBackend('savings_goals', newGoals);
+    };
+
+    return (
+      <div className="pb-32 pt-6 px-4 min-h-screen bg-[#0a0a0a] flex flex-col max-w-md mx-auto w-full">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-black text-white tracking-tight">เป้าหมายการออม</h2>
+          <button onClick={() => openEditor(null)} className="w-10 h-10 gold-bg rounded-full flex items-center justify-center text-black shadow-lg shadow-gold-900/20 active:scale-90 transition-all">
+            <Icons.PlusCircle size={24} />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {savingsGoals.map(goal => {
+            const progress = Math.min((goal.currentamount / goal.targetamount) * 100, 100);
+            return (
+              <div key={goal.id} className="glass-dark p-6 rounded-[2rem] border border-white/10 relative overflow-hidden group">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg" style={{ backgroundColor: goal.color, boxShadow: `0 6px 15px -4px ${goal.color}66` }}>
+                      <Icons.Star size={24} />
+                    </div>
+                    <div>
+                      <div className="font-black text-white text-lg">{goal.name}</div>
+                      <div className="text-xs text-gray-500 font-bold">เป้าหมาย {formatCurrency(goal.targetamount)}</div>
+                    </div>
+                  </div>
+                  <button onClick={() => openEditor(goal)} className="p-2 text-gray-600 hover:text-white transition-colors"><Icons.Settings size={20} /></button>
+                </div>
+
+                <div className="mb-2 flex justify-between items-end">
+                  <div className="text-3xl font-black text-white tracking-tight">{formatCurrency(goal.currentamount).replace('฿', '')}<span className="text-sm text-gold-primary ml-1">฿</span></div>
+                  <div className="text-xs font-black text-gray-500">{Math.round(progress)}%</div>
+                </div>
+
+                <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden mb-6">
+                  <div className="h-full rounded-full transition-all duration-1000 relative" style={{ width: `${progress}%`, backgroundColor: goal.color }}>
+                    <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <button onClick={() => handleAddFunds(goal, 100)} className="flex-1 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold text-white transition-all border border-white/5">+100</button>
+                  <button onClick={() => handleAddFunds(goal, 500)} className="flex-1 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold text-white transition-all border border-white/5">+500</button>
+                  <button onClick={() => handleAddFunds(goal, 1000)} className="flex-1 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold text-white transition-all border border-white/5">+1,000</button>
+                </div>
+              </div>
+            );
+          })}
+
+          {savingsGoals.length === 0 && (
+            <div className="text-center py-20 opacity-50">
+              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-600">
+                <Icons.Star size={40} />
+              </div>
+              <p className="text-gray-500 font-bold">ยังไม่มีเป้าหมายการออม</p>
+              <button onClick={() => openEditor(null)} className="mt-4 text-gold-primary text-sm font-black hover:underline">สร้างเป้าหมายแรก</button>
+            </div>
+          )}
+        </div>
+
+        {isModalOpen && (
+          <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end justify-center">
+            <div className="glass-dark w-full max-w-md rounded-t-[3rem] p-8 pb-10 animate-slide-up border-t border-white/10 shadow-2xl max-h-[85vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="text-2xl font-black text-white tracking-tight">{editing ? 'แก้ไขเป้าหมาย' : 'สร้างเป้าหมายใหม่'}</h3>
+                {editing && (
+                  <button onClick={() => requestConfirm('ลบเป้าหมาย?', 'ยืนยันลบเป้าหมายนี้?', () => {
+                    const newGoals = savingsGoals.filter(g => g.id !== editing.id);
+                    setSavingsGoals(newGoals);
+                    saveToBackend('delete_savings_goal', editing.id);
+                    setIsModalOpen(false);
+                  })} className="text-red-500 hover:text-red-400 font-bold text-sm">ลบ</button>
+                )}
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">ชื่อเป้าหมาย</label>
+                  <input type="text" value={tempName} onChange={e => setTempName(e.target.value)} className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl outline-none font-black text-white focus:border-gold-primary/30 transition-all" placeholder="เช่น เที่ยวญี่ปุ่น, ซื้อ iPhone..." />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">จำนวนเงินเป้าหมาย</label>
+                  <input type="number" value={tempTarget} onChange={e => setTempTarget(e.target.value)} className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl outline-none font-black text-white focus:border-gold-primary/30 transition-all" placeholder="0.00" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">เก็บได้แล้ว (เริ่มต้น)</label>
+                  <input type="number" value={tempCurrent} onChange={e => setTempCurrent(e.target.value)} className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl outline-none font-black text-white focus:border-gold-primary/30 transition-all" placeholder="0.00" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">สีประจำเป้าหมาย</label>
+                  <input type="color" value={tempColor} onChange={e => setTempColor(e.target.value)} className="w-full h-14 bg-transparent border-none cursor-pointer rounded-2xl overflow-hidden" />
+                </div>
+                <div className="pt-4 space-y-3">
+                  <button onClick={handleSave} className="w-full py-5 gold-bg text-black rounded-2xl font-black text-lg shadow-xl shadow-gold-900/20">บันทึกข้อมูล</button>
+                  <button onClick={() => setIsModalOpen(false)} className="w-full py-4 text-gray-500 font-black text-sm hover:text-white transition-colors">ยกเลิก</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   function MoneyTrackerApp() {
     const [user, setUser] = useState(null);
     const { theme, toggleTheme } = useTheme();
@@ -939,6 +1083,7 @@
     const [transactions, setTransactions] = useState([]);
     const [categories, setCategories] = useState([]);
     const [wallets, setWallets] = useState([]);
+    const [savingsGoals, setSavingsGoals] = useState([]);
     const [activeWalletId, setActiveWalletId] = useState('all');
     const [settings, setSettings] = useState({ cutoffDay: 1 });
     const [notification, setNotification] = useState(null);
@@ -981,6 +1126,7 @@
           if (data.status === 'success') {
             setTransactions(data.transactions);
             setCategories(data.categories);
+            setSavingsGoals(data.savingsGoals || []);
             setWallets(sortWallets(data.wallets || []));
             setSettings(data.settings);
           }
@@ -998,6 +1144,8 @@
         if (type === 'delete_wallet') google.script.run.withSuccessHandler(h).withFailureHandler(f).deleteWallet(data, user.username);
         if (type === 'categories') google.script.run.withSuccessHandler(h).withFailureHandler(f).updateCategories(data, user.username);
         if (type === 'wallets') google.script.run.withSuccessHandler(h).withFailureHandler(f).updateWallets(data, user.username);
+        if (type === 'savings_goals') google.script.run.withSuccessHandler(h).withFailureHandler(f).updateSavingsGoals(data, user.username);
+        if (type === 'delete_savings_goal') google.script.run.withSuccessHandler(h).withFailureHandler(f).deleteSavingsGoal(data, user.username);
       }
     };
 
@@ -1010,6 +1158,7 @@
           {activeTab === 'dashboard' && <ScreenDashboard transactions={transactions} categories={categories} wallets={wallets} activeWalletId={activeWalletId} setActiveWalletId={setActiveWalletId} />}
           {activeTab === 'add' && <ScreenAdd editTx={editTx} setEditTx={setEditTx} setActiveTab={setActiveTab} categories={categories} wallets={wallets} setTransactions={setTransactions} saveToBackend={saveToBackend} user={user} showNotification={showNotification} requestConfirm={requestConfirm} setActiveWalletId={setActiveWalletId} />}
           {activeTab === 'history' && <ScreenHistory transactions={transactions} categories={categories} wallets={wallets} activeWalletId={activeWalletId} setActiveWalletId={setActiveWalletId} setEditTx={setEditTx} setActiveTab={setActiveTab} />}
+          {activeTab === 'savings' && <ScreenSavings savingsGoals={savingsGoals} setSavingsGoals={setSavingsGoals} saveToBackend={saveToBackend} requestConfirm={requestConfirm} />}
           {activeTab === 'settings' && (
             <div className="p-8 pt-12 pb-40 bg-[#0a0a0a] min-h-screen">
               <h2 className="text-3xl font-black mb-10 tracking-tight">ตั้งค่า</h2>
@@ -1073,6 +1222,7 @@
             <button onClick={() => setActiveTab('dashboard')} className={`p-2 transition-all ${activeTab === 'dashboard' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.PieChart size={24} /></button>
             <button onClick={() => setActiveTab('history')} className={`p-2 transition-all ${activeTab === 'history' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.List size={24} /></button>
             <button onClick={() => { setEditTx(null); setActiveTab('add'); }} className="w-16 h-16 gold-bg rounded-[1.5rem] flex items-center justify-center text-black shadow-2xl shadow-gold-900/40 -mt-16 border-[6px] border-[#0a0a0a] active:scale-90 transition-all nav-add-glow"><Icons.PlusCircle size={32} /></button>
+            <button onClick={() => setActiveTab('savings')} className={`p-2 transition-all ${activeTab === 'savings' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.Star size={24} /></button>
             <button onClick={() => setActiveTab('settings')} className={`p-2 transition-all ${activeTab === 'settings' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.Settings size={24} /></button>
             <button onClick={() => setActiveTab('me')} className={`p-2 transition-all ${activeTab === 'me' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.User size={24} /></button>
           </nav>
