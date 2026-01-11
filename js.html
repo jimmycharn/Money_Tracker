@@ -1,4 +1,4 @@
-<script type="text/babel">
+﻿<script type="text/babel">
   const { useState, useEffect, useMemo, useRef } = React;
 
   const toLocalDateString = (date) => {
@@ -681,7 +681,7 @@
         </div>
         {isModalOpen && (
           <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end justify-center">
-            <div className="glass-dark w-full max-w-md rounded-t-[3rem] p-10 animate-slide-up border-t border-white/10 shadow-2xl">
+            <div className="glass-dark w-full max-w-md rounded-t-[3rem] p-8 pb-10 animate-slide-up border-t border-white/10 shadow-2xl max-h-[85vh] overflow-y-auto">
               <h3 className="text-2xl font-black text-white mb-8 tracking-tight">ข้อมูลหมวดหมู่</h3>
               <div className="space-y-6">
                 <div>
@@ -718,13 +718,13 @@
     const [tempBalance, setTempBalance] = useState('');
     const [tempColor, setTempColor] = useState('#D4AF37');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
+
     // Drag and Drop State
     const [draggedItem, setDraggedItem] = useState(null);
     const [touchStartPos, setTouchStartPos] = useState(null);
 
     const openEditor = (w) => { setEditing(w); setTempName(w ? w.name : ''); setTempBalance(w ? String(w.initialbalance || 0) : ''); setTempColor(w ? w.color : '#D4AF37'); setIsModalOpen(true); };
-    
+
     const handleSave = () => {
       if (!tempName) return; let newWallets = [...wallets];
       if (editing) newWallets = newWallets.map(w => w.id === editing.id ? { ...w, name: tempName, initialbalance: parseFloat(tempBalance) || 0, color: tempColor } : w);
@@ -733,69 +733,69 @@
         newWallets.push(newWallet);
         const savedOrder = JSON.parse(localStorage.getItem('wallet_order') || '[]');
         if (savedOrder.length > 0) {
-           savedOrder.push(newWallet.id);
-           localStorage.setItem('wallet_order', JSON.stringify(savedOrder));
+          savedOrder.push(newWallet.id);
+          localStorage.setItem('wallet_order', JSON.stringify(savedOrder));
         }
       }
       setWallets(newWallets); saveToBackend('wallets', newWallets); setIsModalOpen(false);
     };
 
     const saveOrder = (newWallets) => {
-        const order = newWallets.map(w => w.id);
-        localStorage.setItem('wallet_order', JSON.stringify(order));
-        setWallets(newWallets);
+      const order = newWallets.map(w => w.id);
+      localStorage.setItem('wallet_order', JSON.stringify(order));
+      setWallets(newWallets);
     };
 
     // Mouse Drag Handlers
     const onDragStart = (e, index) => {
-        setDraggedItem(wallets[index]);
-        e.dataTransfer.effectAllowed = "move";
+      setDraggedItem(wallets[index]);
+      e.dataTransfer.effectAllowed = "move";
     };
 
     const onDragOver = (e, index) => {
-        e.preventDefault();
-        const draggedOverItem = wallets[index];
-        if (draggedItem === draggedOverItem) return;
-        
-        let items = wallets.filter(item => item !== draggedItem);
-        items.splice(index, 0, draggedItem);
-        
-        saveOrder(items);
+      e.preventDefault();
+      const draggedOverItem = wallets[index];
+      if (draggedItem === draggedOverItem) return;
+
+      let items = wallets.filter(item => item !== draggedItem);
+      items.splice(index, 0, draggedItem);
+
+      saveOrder(items);
     };
 
     const onDragEnd = () => {
-        setDraggedItem(null);
+      setDraggedItem(null);
     };
 
     // Touch Drag Handlers
     const onTouchStart = (e, index) => {
-        setTouchStartPos({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-        setDraggedItem(wallets[index]);
+      setTouchStartPos({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+      setDraggedItem(wallets[index]);
     };
 
     const onTouchMove = (e) => {
-        if (!draggedItem) return;
-        if (e.cancelable) e.preventDefault();
-        
-        const touch = e.touches[0];
-        const element = document.elementFromPoint(touch.clientX, touch.clientY);
-        
-        if (element) {
-            const listRow = element.closest('[data-wallet-index]');
-            if (listRow) {
-                const index = parseInt(listRow.getAttribute('data-wallet-index'));
-                if (!isNaN(index) && wallets[index] && wallets[index] !== draggedItem) {
-                     let items = wallets.filter(item => item !== draggedItem);
-                     items.splice(index, 0, draggedItem);
-                     saveOrder(items);
-                }
-            }
+      if (!draggedItem) return;
+      if (e.cancelable) e.preventDefault();
+
+      const touch = e.touches[0];
+      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+
+      if (element) {
+        const listRow = element.closest('[data-wallet-index]');
+        if (listRow) {
+          const index = parseInt(listRow.getAttribute('data-wallet-index'));
+          if (!isNaN(index) && wallets[index] && wallets[index] !== draggedItem) {
+            let items = wallets.filter(item => item !== draggedItem);
+            items.splice(index, 0, draggedItem);
+            saveOrder(items);
+          }
         }
+      }
     };
 
     const onTouchEnd = () => {
-        setDraggedItem(null);
-        setTouchStartPos(null);
+      setDraggedItem(null);
+      setTouchStartPos(null);
     };
 
     return (
@@ -808,8 +808,8 @@
         <div className="p-6 flex-1 overflow-y-auto bg-[#0a0a0a]">
           <div className="space-y-3">
             {wallets.map((w, index) => (
-              <div 
-                key={w.id} 
+              <div
+                key={w.id}
                 data-wallet-index={index}
                 draggable
                 onDragStart={(e) => onDragStart(e, index)}
@@ -818,7 +818,7 @@
                 onTouchStart={(e) => onTouchStart(e, index)}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
-                onClick={() => openEditor(w)} 
+                onClick={() => openEditor(w)}
                 className={`glass-dark p-5 rounded-[1.5rem] flex justify-between items-center border border-white/10 hover:border-gold-primary/30 transition-all cursor-pointer group select-none ${draggedItem === w ? 'opacity-50 scale-95 border-gold-primary border-dashed' : ''}`}
               >
                 <div className="flex items-center gap-5 pointer-events-none">
@@ -838,7 +838,7 @@
         </div>
         {isModalOpen && (
           <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end justify-center">
-            <div className="glass-dark w-full max-w-md rounded-t-[3rem] p-10 animate-slide-up border-t border-white/10 shadow-2xl">
+            <div className="glass-dark w-full max-w-md rounded-t-[3rem] p-8 pb-10 animate-slide-up border-t border-white/10 shadow-2xl max-h-[85vh] overflow-y-auto">
               <h3 className="text-2xl font-black text-white mb-8 tracking-tight">ข้อมูลกระเป๋าเงิน</h3>
               <div className="space-y-6">
                 <div>
