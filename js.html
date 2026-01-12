@@ -1177,6 +1177,7 @@
               setTransactions(prev => [newTx, ...prev]);
               saveToBackend('transaction', newTx);
               showNotification(`บันทึกแล้ว: ${d.note} ${d.amount}฿`);
+              setActiveTab('history');
             } else {
               showNotification('ข้อมูลไม่ครบถ้วน กรุณาบันทึกเอง', 'error');
               setEditTx(newTx); // Open edit screen with partial data
