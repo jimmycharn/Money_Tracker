@@ -29,7 +29,8 @@
     TrendingUp: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>,
     Search: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>,
     Star: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>,
-    Mic: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+    Mic: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>,
+    Download: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
   };
 
   const ThemeContext = React.createContext();
@@ -1125,6 +1126,97 @@
     );
   };
 
+  const ExportModal = ({ isOpen, onClose, transactions, categories, wallets }) => {
+    if (!isOpen) return null;
+    const [startDate, setStartDate] = useState(toLocalDateString(new Date(new Date().getFullYear(), 0, 1)));
+    const [endDate, setEndDate] = useState(toLocalDateString(new Date()));
+
+    const escapeCSV = (str) => {
+      if (!str) return '';
+      const stringValue = String(str);
+      if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+        return `"${stringValue.replace(/"/g, '""')}"`;
+      }
+      return stringValue;
+    };
+
+    const handleExport = () => {
+      const filtered = transactions.filter(t => t.date >= startDate && t.date <= endDate);
+      const header = ["วันที่", "ประเภท", "หมวดหมู่", "จำนวนเงิน", "กระเป๋า", "บันทึก"].join(",") + "\n";
+
+      let body = "";
+      filtered.forEach(t => {
+        const cat = categories.find(c => c.id === t.categoryId) || { name: 'ไม่ระบุ' };
+        const wallet = wallets.find(w => w.id === t.walletId) || { name: 'ไม่ระบุ' };
+        const type = t.type === 'income' ? 'รายรับ' : 'รายจ่าย';
+
+        const row = [
+          t.date,
+          type,
+          cat.name,
+          t.amount,
+          wallet.name,
+          t.note || ''
+        ].map(escapeCSV).join(',');
+
+        body += row + '\n';
+      });
+
+      const csvContent = header + body;
+      // Convert to UTF-16LE (Excel preferred format for non-ASCII)
+      const byteArray = new Uint8Array((csvContent.length + 1) * 2);
+      // BOM (FF FE)
+      byteArray[0] = 0xFF;
+      byteArray[1] = 0xFE;
+      
+      for (let i = 0; i < csvContent.length; i++) {
+        const code = csvContent.charCodeAt(i);
+        byteArray[(i + 1) * 2] = code & 0xff;
+        byteArray[(i + 1) * 2 + 1] = (code >> 8) & 0xff;
+      }
+
+      const blob = new Blob([byteArray], { type: 'text/csv;charset=utf-16le' });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `money_tracker_${startDate}_${endDate}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      onClose();
+    };
+
+    return (
+      <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+        <div className="glass-dark w-full max-w-sm rounded-[2rem] p-6 shadow-2xl border border-white/10 animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-black text-white tracking-tight">ส่งออกข้อมูล (CSV)</h3>
+            <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors"><Icons.X size={24} /></button>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">ตั้งแต่วันที่</label>
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none font-bold text-white focus:border-gold-primary/30 transition-all" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">ถึงวันที่</label>
+              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl outline-none font-bold text-white focus:border-gold-primary/30 transition-all" />
+            </div>
+            <div className="pt-2">
+              <button onClick={handleExport} className="w-full py-4 gold-bg text-black rounded-2xl font-black text-lg shadow-xl shadow-gold-900/20 active:scale-95 transition-all">
+                <div className="flex items-center justify-center gap-2">
+                  <Icons.Download size={20} />
+                  <span>ดาวน์โหลด CSV</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   function MoneyTrackerApp() {
     const [user, setUser] = useState(null);
     const { theme, toggleTheme } = useTheme();
@@ -1141,6 +1233,7 @@
     const [showCategoryManager, setShowCategoryManager] = useState(false);
     const [showWalletManager, setShowWalletManager] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
+    const [showExportModal, setShowExportModal] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
     const [isGlobalListening, setIsGlobalListening] = useState(false);
 
@@ -1301,6 +1394,13 @@
                   </div>
                   <Icons.ChevronRight className="text-gray-600" />
                 </div>
+                <div onClick={() => setShowExportModal(true)} className="flex items-center justify-between p-6 glass-dark rounded-[1.5rem] cursor-pointer border border-white/5 hover:border-gold-primary/30 transition-all group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-gold-primary/10 flex items-center justify-center text-gold-primary group-hover:scale-110 transition-transform"><Icons.Download size={24} /></div>
+                    <span className="font-black text-sm">ส่งออกข้อมูล (CSV)</span>
+                  </div>
+                  <Icons.ChevronRight className="text-gray-600" />
+                </div>
               </div>
             </div>
           )}
@@ -1342,6 +1442,7 @@
           {showCategoryManager && <CategoryManager onClose={() => setShowCategoryManager(false)} categories={categories} setCategories={setCategories} saveToBackend={saveToBackend} requestConfirm={requestConfirm} />}
           {showWalletManager && <WalletManager onClose={() => setShowWalletManager(false)} wallets={wallets} setWallets={setWallets} saveToBackend={saveToBackend} requestConfirm={requestConfirm} />}
           {showTransferModal && <TransferModal onClose={() => setShowTransferModal(false)} wallets={wallets} setTransactions={setTransactions} user={user} showNotification={showNotification} toLocalDateString={toLocalDateString} generateId={generateId} />}
+          {showExportModal && <ExportModal isOpen={showExportModal} onClose={() => setShowExportModal(false)} transactions={transactions} categories={categories} wallets={wallets} />}
           {!/Line/i.test(navigator.userAgent) && (
             <button
               onClick={handleGlobalVoiceAdd}
