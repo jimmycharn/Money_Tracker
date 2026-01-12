@@ -1139,6 +1139,57 @@
     const [showWalletManager, setShowWalletManager] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
+    const [isGlobalListening, setIsGlobalListening] = useState(false);
+
+    const handleGlobalVoiceAdd = () => {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) { showNotification('เบราว์เซอร์ไม่รองรับ', 'error'); return; }
+      if (isGlobalListening) return;
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'th-TH';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => setIsGlobalListening(true);
+      recognition.onend = () => setIsGlobalListening(false);
+      recognition.onerror = () => { setIsGlobalListening(false); showNotification('เกิดข้อผิดพลาดในการรับเสียง', 'error'); };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        showNotification(`กำลังวิเคราะห์: "${transcript}"...`);
+
+        google.script.run.withSuccessHandler(res => {
+          if (res.success) {
+            const d = res.data;
+            const cat = categories.find(c => (c.name.toLowerCase() === d.categoryName.toLowerCase() || d.categoryName.includes(c.name)) && c.type === d.type) || categories.find(c => c.name === 'อื่นๆ' && c.type === d.type);
+            const newTx = {
+              id: generateId(),
+              amount: d.amount,
+              type: d.type,
+              date: d.date,
+              note: d.note,
+              categoryId: cat?.id || '',
+              walletId: activeWalletId === 'all' ? (wallets[0]?.id || '') : activeWalletId
+            };
+
+            if (newTx.categoryId && newTx.walletId) {
+              setTransactions(prev => [newTx, ...prev]);
+              saveToBackend('transaction', newTx);
+              showNotification(`บันทึกแล้ว: ${d.note} ${d.amount}฿`);
+            } else {
+              showNotification('ข้อมูลไม่ครบถ้วน กรุณาบันทึกเอง', 'error');
+              setEditTx(newTx); // Open edit screen with partial data
+              setActiveTab('add');
+            }
+          } else {
+            showNotification(res.error, 'error');
+          }
+        }).withFailureHandler(() => showNotification('AI เชื่อมต่อล้มเหลว', 'error')).processWithGemini(transcript, user.username);
+      };
+
+      recognition.start();
+    };
 
     const showNotification = (msg, type = 'success') => { setNotification({ msg, type }); setTimeout(() => setNotification(null), 3000); };
     const requestConfirm = (title, message, onConfirm) => setConfirmDialog({ isOpen: true, title, message, onConfirm });
@@ -1286,6 +1337,12 @@
           {showCategoryManager && <CategoryManager onClose={() => setShowCategoryManager(false)} categories={categories} setCategories={setCategories} saveToBackend={saveToBackend} requestConfirm={requestConfirm} />}
           {showWalletManager && <WalletManager onClose={() => setShowWalletManager(false)} wallets={wallets} setWallets={setWallets} saveToBackend={saveToBackend} requestConfirm={requestConfirm} />}
           {showTransferModal && <TransferModal onClose={() => setShowTransferModal(false)} wallets={wallets} setTransactions={setTransactions} user={user} showNotification={showNotification} toLocalDateString={toLocalDateString} generateId={generateId} />}
+          <button
+            onClick={handleGlobalVoiceAdd}
+            className={`fixed bottom-28 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl z-50 transition-all active:scale-90 ${isGlobalListening ? 'bg-red-500 text-white animate-pulse shadow-red-500/40' : 'gold-bg text-black shadow-gold-900/20'}`}
+          >
+            <Icons.Mic size={24} />
+          </button>
           <ConfirmModal isOpen={confirmDialog.isOpen} title={confirmDialog.title} message={confirmDialog.message} onConfirm={() => { confirmDialog.onConfirm(); setConfirmDialog({ ...confirmDialog, isOpen: false }); }} onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} />
         </div>
       </div>
