@@ -28,7 +28,8 @@
     Wallet: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg>,
     TrendingUp: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>,
     Search: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>,
-    Star: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+    Star: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>,
+    Mic: (p) => <svg {...p} width={p.size || 24} height={p.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
   };
 
   const ThemeContext = React.createContext();
@@ -371,7 +372,50 @@
     const [note, setNote] = useState(editTx ? editTx.note : '');
     const [aiText, setAiText] = useState('');
     const [aiLoading, setAiLoading] = useState(false);
+    const [isListening, setIsListening] = useState(false);
     const aiInputRef = useRef(null);
+
+    const handleVoiceInput = () => {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        showNotification('เบราว์เซอร์ไม่รองรับการสั่งงานด้วยเสียง', 'error');
+        return;
+      }
+
+      if (isListening) {
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'th-TH';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setAiText(prev => prev ? `${prev} ${transcript}` : transcript);
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        setIsListening(false);
+        if (event.error === 'not-allowed') {
+          showNotification('กรุณาอนุญาตการใช้ไมโครโฟน', 'error');
+        } else {
+          showNotification('เกิดข้อผิดพลาดในการรับเสียง', 'error');
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    };
 
     useEffect(() => {
       if (!editTx && aiInputRef.current) {
@@ -446,9 +490,12 @@
           </div>
         </div>
         <div className="px-8 mb-6 space-y-3">
-          <div className="glass-dark rounded-2xl p-3 flex gap-3 border border-white/10 shadow-lg">
-            <div className="p-2 text-gold-primary"><Icons.Sparkles size={20} /></div>
-            <input ref={aiInputRef} value={aiText} onChange={e => setAiText(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleAI()} className="flex-1 bg-transparent outline-none text-sm font-bold text-white placeholder:text-gray-600" placeholder="พิมพ์บอก AI เช่น 'กินข้าว 50 บาท'..." />
+          <div className={`glass-dark rounded-2xl p-3 flex gap-3 border transition-all shadow-lg ${isListening ? 'border-red-500/50 shadow-red-500/20' : 'border-white/10'}`}>
+            <div className={`p-2 transition-colors ${isListening ? 'text-red-500 animate-pulse' : 'text-gold-primary'}`}><Icons.Sparkles size={20} /></div>
+            <input ref={aiInputRef} value={aiText} onChange={e => setAiText(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleAI()} className="flex-1 bg-transparent outline-none text-sm font-bold text-white placeholder:text-gray-600" placeholder="พิมพ์หรือพูด เช่น 'กินข้าว 50 บาท'..." />
+            <button onClick={handleVoiceInput} className={`p-2 rounded-xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-gray-400 hover:text-white'}`}>
+              <Icons.Mic size={20} />
+            </button>
           </div>
           <button onClick={handleAI} disabled={aiLoading} className="w-full py-3 gold-bg text-black rounded-xl font-black text-xs active:scale-95 transition-all shadow-lg shadow-gold-900/20">{aiLoading ? '...' : 'วิเคราะห์ด้วย AI'}</button>
         </div>
