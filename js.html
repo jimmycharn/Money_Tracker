@@ -1218,10 +1218,10 @@
             </div>
           )}
 
-          <nav className="fixed bottom-6 left-4 right-4 glass-dark border border-white/10 px-6 py-4 flex justify-between items-center z-50 max-w-md mx-auto rounded-[2.5rem] shadow-2xl">
+          <nav className="fixed bottom-6 left-0 right-0 mx-auto w-[calc(100%-2rem)] glass-dark border border-white/10 px-6 py-4 flex justify-between items-center z-50 max-w-md rounded-[2.5rem] shadow-2xl">
             <button onClick={() => setActiveTab('dashboard')} className={`p-2 transition-all ${activeTab === 'dashboard' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.PieChart size={24} /></button>
             <button onClick={() => setActiveTab('history')} className={`p-2 transition-all ${activeTab === 'history' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.List size={24} /></button>
-            <button onClick={() => { setEditTx(null); setActiveTab('add'); }} className="w-16 h-16 gold-bg rounded-[1.5rem] flex items-center justify-center text-black shadow-2xl shadow-gold-900/40 -mt-16 border-[6px] border-[#0a0a0a] active:scale-90 transition-all nav-add-glow"><Icons.PlusCircle size={32} /></button>
+            <button onClick={() => { setEditTx(null); setActiveTab('add'); }} className="absolute left-1/2 -translate-x-1/2 -top-12 w-16 h-16 gold-bg rounded-[1.5rem] flex items-center justify-center text-black shadow-2xl shadow-gold-900/40 border-[6px] border-[#0a0a0a] active:scale-90 transition-all nav-add-glow"><Icons.PlusCircle size={32} /></button>
             <button onClick={() => setActiveTab('savings')} className={`p-2 transition-all ${activeTab === 'savings' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.Star size={24} /></button>
             <button onClick={() => setActiveTab('settings')} className={`p-2 transition-all ${activeTab === 'settings' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.Settings size={24} /></button>
             <button onClick={() => setActiveTab('me')} className={`p-2 transition-all ${activeTab === 'me' ? 'gold-text scale-125' : 'text-gray-600 hover:text-gray-400'}`}><Icons.User size={24} /></button>
