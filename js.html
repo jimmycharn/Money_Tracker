@@ -490,10 +490,10 @@
           </div>
         </div>
         <div className="px-8 mb-6 space-y-3">
-          <div className={`glass-dark rounded-2xl p-3 flex gap-3 border transition-all shadow-lg ${isListening ? 'border-red-500/50 shadow-red-500/20' : 'border-white/10'}`}>
-            <div className={`p-2 transition-colors ${isListening ? 'text-red-500 animate-pulse' : 'text-gold-primary'}`}><Icons.Sparkles size={20} /></div>
-            <input ref={aiInputRef} value={aiText} onChange={e => setAiText(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleAI()} className="flex-1 bg-transparent outline-none text-sm font-bold text-white placeholder:text-gray-600" placeholder="พิมพ์หรือพูด เช่น 'กินข้าว 50 บาท'..." />
-            <button onClick={handleVoiceInput} className={`p-2 rounded-xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-gray-400 hover:text-white'}`}>
+          <div className={`glass-dark rounded-2xl p-3 flex items-center gap-3 border transition-all shadow-lg relative ${isListening ? 'border-red-500/50 shadow-red-500/20' : 'border-white/10'}`}>
+            <div className={`p-2 transition-colors shrink-0 ${isListening ? 'text-red-500 animate-pulse' : 'text-gold-primary'}`}><Icons.Sparkles size={20} /></div>
+            <input ref={aiInputRef} value={aiText} onChange={e => setAiText(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleAI()} className="flex-1 bg-transparent outline-none text-sm font-bold text-white placeholder:text-gray-600 min-w-0 pr-10" placeholder="พิมพ์หรือพูด เช่น 'กินข้าว 50 บาท'..." />
+            <button onClick={handleVoiceInput} className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-gray-400 hover:text-white'}`}>
               <Icons.Mic size={20} />
             </button>
           </div>
