@@ -494,9 +494,11 @@
           <div className={`glass-dark rounded-2xl p-3 flex items-center gap-3 border transition-all shadow-lg relative ${isListening ? 'border-red-500/50 shadow-red-500/20' : 'border-white/10'}`}>
             <div className={`p-2 transition-colors shrink-0 ${isListening ? 'text-red-500 animate-pulse' : 'text-gold-primary'}`}><Icons.Sparkles size={20} /></div>
             <input ref={aiInputRef} value={aiText} onChange={e => setAiText(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleAI()} className="flex-1 bg-transparent outline-none text-sm font-bold text-white placeholder:text-gray-600 min-w-0 pr-10" placeholder="พิมพ์หรือพูด เช่น 'กินข้าว 50 บาท'..." />
-            <button onClick={handleVoiceInput} className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-gray-400 hover:text-white'}`}>
-              <Icons.Mic size={20} />
-            </button>
+            {!/Line/i.test(navigator.userAgent) && (
+              <button onClick={handleVoiceInput} className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-gray-400 hover:text-white'}`}>
+                <Icons.Mic size={20} />
+              </button>
+            )}
           </div>
           <button onClick={handleAI} disabled={aiLoading} className="w-full py-3 gold-bg text-black rounded-xl font-black text-xs active:scale-95 transition-all shadow-lg shadow-gold-900/20">{aiLoading ? '...' : 'วิเคราะห์ด้วย AI'}</button>
         </div>
@@ -1340,12 +1342,14 @@
           {showCategoryManager && <CategoryManager onClose={() => setShowCategoryManager(false)} categories={categories} setCategories={setCategories} saveToBackend={saveToBackend} requestConfirm={requestConfirm} />}
           {showWalletManager && <WalletManager onClose={() => setShowWalletManager(false)} wallets={wallets} setWallets={setWallets} saveToBackend={saveToBackend} requestConfirm={requestConfirm} />}
           {showTransferModal && <TransferModal onClose={() => setShowTransferModal(false)} wallets={wallets} setTransactions={setTransactions} user={user} showNotification={showNotification} toLocalDateString={toLocalDateString} generateId={generateId} />}
-          <button
-            onClick={handleGlobalVoiceAdd}
-            className={`fixed bottom-28 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl z-50 transition-all active:scale-90 ${isGlobalListening ? 'bg-red-500 text-white animate-pulse shadow-red-500/40' : 'gold-bg text-black shadow-gold-900/20'}`}
-          >
-            <Icons.Mic size={24} />
-          </button>
+          {!/Line/i.test(navigator.userAgent) && (
+            <button
+              onClick={handleGlobalVoiceAdd}
+              className={`fixed bottom-28 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl z-50 transition-all active:scale-90 ${isGlobalListening ? 'bg-red-500 text-white animate-pulse shadow-red-500/40' : 'gold-bg text-black shadow-gold-900/20'}`}
+            >
+              <Icons.Mic size={24} />
+            </button>
+          )}
           <ConfirmModal isOpen={confirmDialog.isOpen} title={confirmDialog.title} message={confirmDialog.message} onConfirm={() => { confirmDialog.onConfirm(); setConfirmDialog({ ...confirmDialog, isOpen: false }); }} onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} />
         </div>
       </div>
