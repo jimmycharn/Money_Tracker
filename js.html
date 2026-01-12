@@ -377,8 +377,9 @@
 
     const handleVoiceInput = () => {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        showNotification('เบราว์เซอร์ไม่รองรับการสั่งงานด้วยเสียง', 'error');
+      const isLine = /Line/i.test(navigator.userAgent);
+      if (isLine || !SpeechRecognition) {
+        showNotification(isLine ? 'LINE ไม่รองรับเสียง กรุณาเปิดใน Chrome/Safari' : 'เบราว์เซอร์ไม่รองรับการสั่งงานด้วยเสียง', 'error');
         return;
       }
 
@@ -1143,7 +1144,8 @@
 
     const handleGlobalVoiceAdd = () => {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) { showNotification('เบราว์เซอร์ไม่รองรับ', 'error'); return; }
+      const isLine = /Line/i.test(navigator.userAgent);
+      if (isLine || !SpeechRecognition) { showNotification(isLine ? 'LINE ไม่รองรับเสียง กรุณาเปิดใน Chrome/Safari' : 'เบราว์เซอร์ไม่รองรับ', 'error'); return; }
       if (isGlobalListening) return;
 
       const recognition = new SpeechRecognition();
